@@ -156,55 +156,6 @@ function logout(redirectTo = 'Home.html') {
   window.location.href = redirectTo;
 }
 
-// ======================== DAY SELECTION HELPERS ========================
-const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-/**
- * Render weekday checkboxes inside a container.
- * @param {string} containerId - ID of the container element.
- * @param {string} selectedDaysStr - Comma-separated string of selected days (e.g. "Sunday,Monday").
- */
-function renderDayCheckboxes(containerId, selectedDaysStr = '') {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  const selectedSet = new Set(selectedDaysStr.split(',').map(s => s.trim()).filter(Boolean));
-  container.innerHTML = WEEKDAYS.map(day => {
-    const checked = selectedSet.has(day) ? 'checked' : '';
-    return `<label style="display:flex; align-items:center; gap:8px; margin:0; padding:2px 0; font-size:12px; cursor:pointer;">
-      <input type="checkbox" value="${day}" ${checked} style="margin:0; width:16px; height:16px;">
-      <span>${day}</span>
-    </label>`;
-  }).join('');
-}
-
-/**
- * Get selected days from a checkbox container.
- * @param {string} containerId - ID of the container holding the checkboxes.
- * @returns {string} Comma-separated list of selected days.
- */
-function getSelectedDays(containerId) {
-  const container = document.getElementById(containerId);
-  if (!container) return '';
-  return Array.from(container.querySelectorAll('input:checked'))
-              .map(cb => cb.value)
-              .join(',');
-}
-
-function selectAllDays(containerId) {
-  const container = document.getElementById(containerId);
-  if (container) {
-    container.querySelectorAll('input').forEach(cb => cb.checked = true);
-  }
-}
-
-function unselectAllDays(containerId) {
-  const container = document.getElementById(containerId);
-  if (container) {
-    container.querySelectorAll('input').forEach(cb => cb.checked = false);
-  }
-}
-
-
 // ======================== USERSETTINGS SHEET MANAGEMENT ========================
 const USER_SETTINGS_SHEET = 'UserSettings';
 
@@ -270,4 +221,52 @@ async function setUserSetting(spreadsheetId, key, value) {
       });
     }
   } catch (e) { console.warn('setUserSetting', e); }
+}
+
+// ======================== DAY SELECTION HELPERS ========================
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+/**
+ * Render weekday checkboxes inside a container.
+ * @param {string} containerId - ID of the container element.
+ * @param {string} selectedDaysStr - Comma-separated string of selected days (e.g. "Sunday,Monday").
+ */
+function renderDayCheckboxes(containerId, selectedDaysStr = '') {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const selectedSet = new Set(selectedDaysStr.split(',').map(s => s.trim()).filter(Boolean));
+  container.innerHTML = WEEKDAYS.map(day => {
+    const checked = selectedSet.has(day) ? 'checked' : '';
+    return `<label style="display:flex; align-items:center; gap:8px; margin:0; padding:2px 0; font-size:12px; cursor:pointer;">
+      <input type="checkbox" value="${day}" ${checked} style="margin:0; width:16px; height:16px;">
+      <span>${day}</span>
+    </label>`;
+  }).join('');
+}
+
+/**
+ * Get selected days from a checkbox container.
+ * @param {string} containerId - ID of the container holding the checkboxes.
+ * @returns {string} Comma-separated list of selected days.
+ */
+function getSelectedDays(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return '';
+  return Array.from(container.querySelectorAll('input:checked'))
+              .map(cb => cb.value)
+              .join(',');
+}
+
+function selectAllDays(containerId) {
+  const container = document.getElementById(containerId);
+  if (container) {
+    container.querySelectorAll('input').forEach(cb => cb.checked = true);
+  }
+}
+
+function unselectAllDays(containerId) {
+  const container = document.getElementById(containerId);
+  if (container) {
+    container.querySelectorAll('input').forEach(cb => cb.checked = false);
+  }
 }
