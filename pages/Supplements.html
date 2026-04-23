@@ -81,8 +81,8 @@
       <input type="text" id="suppName" placeholder="e.g. Vitamin D3">
     </div>
     <div class="form-group">
-      <label>Use For (health concerns)</label>
-      <div id="suppUseForCheckboxes"></div>
+      <label>Use For *</label>
+      <div id="useForCheckboxes"></div>
     </div>
     <div class="form-group" style="display: flex; flex-direction: row; align-items: center; gap: 12px;">
       <label style="margin-bottom: 0;">Active / Inactive</label>
@@ -554,7 +554,7 @@ function openSupplementModal(supplementId = null) {
     const supp = supplements.find(s => s.supplementId === supplementId);
     if (supp) {
       document.getElementById('suppName').value = supp.name;
-      renderUseForCheckboxesGeneric('suppUseForCheckboxes', USE_FOR_OPTIONS_SUPP, supp.useFor || '');
+      renderUseForCheckboxesGeneric('useForCheckboxes', USE_FOR_OPTIONS_SUPP, supp.useFor || '');
       if (supp.status === 'Active') {
         statusToggle.classList.add('active'); statusToggle.classList.remove('inactive');
         statusInput.value = 'Active';
@@ -565,7 +565,7 @@ function openSupplementModal(supplementId = null) {
     }
   } else {
     document.getElementById('suppName').value = '';
-    renderUseForCheckboxesGeneric('suppUseForCheckboxes', USE_FOR_OPTIONS_SUPP, '');
+    renderUseForCheckboxesGeneric('useForCheckboxes', USE_FOR_OPTIONS_SUPP, '');
     statusToggle.classList.add('active'); statusToggle.classList.remove('inactive');
     statusInput.value = 'Active';
   }
@@ -591,7 +591,7 @@ function toggleSuppStatusUI(event) {
 async function saveSupplement() {
   const id = document.getElementById('editSupplementId').value;
   const name = document.getElementById('suppName').value.trim();
-  const useFor = getSelectedUseForGeneric('suppUseForCheckboxes');
+  const useFor = getSelectedUseForGeneric('useForCheckboxes');
   const status = document.getElementById('suppStatusInput').value;
   if (!name) { showToast('Supplement name required', 'error'); return; }
   let newId = id;
