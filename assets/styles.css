@@ -1292,3 +1292,72 @@ input[list="timeOptions"] {
   font-size: 11px;
   color: var(--text-3);
 }
+/* ===== IMPROVED TAB DESIGN (matching Installments) ===== */
+.tab-bar {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: var(--surface);
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 13px 8px;
+  border: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  background: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-3);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.15s;
+  position: relative;
+}
+
+.tab-btn.active {
+  color: var(--brand);
+  border-bottom-color: var(--brand);
+}
+
+.tab-content {
+  padding: 16px;
+  display: none;
+  background: var(--surface);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* ===== DAYS CHECKBOXES (same style as Use For) ===== */
+#daysCheckboxes {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 6px 12px !important;
+  margin-top: 8px !important;
+  width: 100% !important;
+}
+#daysCheckboxes label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 2px 0 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  color: var(--text) !important;
+  cursor: pointer !important;
+}
+#daysCheckboxes input[type="checkbox"] {
+  margin: 0 !important;
+  width: 16px !important;
+  height: 16px !important;
+  flex-shrink: 0 !important;
+}
