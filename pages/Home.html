@@ -180,14 +180,10 @@
   </div>
 
   <!-- Quick Actions -->
-<div class="quick-actions">
-  <button class="quick-btn skincare" onclick="window.location.href='Routine.html'">
-    🧴 Log Routine
-  </button>
-  <button class="quick-btn supplements" onclick="window.location.href='Supplements.html'">
-    💊 Log Supplements
-  </button>
-</div>
+  <div class="quick-actions">
+    <button class="quick-btn skincare" onclick="window.location.href='Routine.html'">🧴 Log Routine</button>
+    <button class="quick-btn supplements" onclick="window.location.href='Supplements.html'">💊 Log Supplements</button>
+  </div>
 
   <!-- Morning Routine Preview -->
   <div class="card">
@@ -273,8 +269,9 @@ async function ensureAllSheetsExist() {
       { name: PRODUCTS_SHEET, headers: ['ProductID','BrandID','Product','Use For','Status'] },
       { name: ROUTINE_SHEET, headers: ['AssignmentID','ProductID','Phase','Step','Days'] },
       { name: ROUTINE_LOG_SHEET, headers: ['Date','ProductID','Phase','Step','Product','Timestamp','Notes'] },
-      { name: SUPPLEMENTS_SHEET, headers: ['SupplementID','Time Slot','Supplement','Frequency','Notes','Status'] },
-      { name: SUPPLEMENTS_LOG_SHEET, headers: ['Date','Time Slot','Supplement','Taken','Notes','Timestamp','SupplementID'] }
+      { name: SUPPLEMENTS_SHEET, headers: ['SupplementID','Name','Use For','Status'] },
+      { name: SUPPLEMENT_ROUTINE_SHEET, headers: ['AssignmentID','SupplementID','TimeSlot','Days','Notes'] },
+      { name: SUPPLEMENTS_LOG_SHEET, headers: ['Date','TimeSlot','Supplement','Taken','Notes','Timestamp','SupplementID'] }
     ];
     
     const missing = requiredSheets.filter(s => !existingSheets.includes(s.name));
@@ -307,8 +304,8 @@ async function loadProducts() {
       productId: r[0] || '',
       brandId: r[1] || '',
       product: r[2] || '',
-      useFor: r[4] || '',
-      status: r[5] || 'Active'
+      useFor: r[3] || '',
+      status: r[4] || 'Active'
     })).filter(p => p.productId);
     saveLocalData();
   } catch (e) { console.error('loadProducts', e); }
@@ -357,17 +354,15 @@ async function loadSupplementsList() {
   if (!spreadsheetId) return;
   try {
     const res = await gapi.client.sheets.spreadsheets.values.get({
-      spreadsheetId, range: `'${SUPPLEMENTS_SHEET}'!A2:F`
+      spreadsheetId, range: `'${SUPPLEMENTS_SHEET}'!A2:D`
     });
     const rows = res.result.values || [];
     supplementsList = rows.map(r => ({
       supplementId: r[0] || '',
-      timeSlot: r[1] || '',
-      supplement: r[2] || '',
-      frequency: r[3] || '',
-      notes: r[4] || '',
-      status: r[5] || 'Active'
-    })).filter(s => s.timeSlot && s.supplement);
+      name: r[1] || '',
+      useFor: r[2] || '',
+      status: r[3] || 'Active'
+    })).filter(s => s.supplementId);
     saveLocalData();
   } catch (e) { console.error('loadSupplementsList', e); }
 }
@@ -398,7 +393,7 @@ async function loadTodayLogs() {
     todaySuppLog.clear();
     sRows.forEach(r => {
       if (r[0] === dateStr && r[3] === 'TRUE') {
-        todaySuppLog.set(`${r[1]}|${r[2]}`, true);
+        todaySuppLog.set(r[6] || '', true); // key by supplementId (column G)
       }
     });
   } catch (e) { console.error('loadTodayLogs', e); }
@@ -416,15 +411,20 @@ function renderDashboard() {
     return product && product.status === 'Active';
   });
   
-  const morningSteps = activeAssignments.filter(a => a.phase === 'Morning').sort((a,b) => a.step - b.step);
-  const eveningSteps = activeAssignments.filter(a => a.phase === 'Evening').sort((a,b) => a.step - b.step);
+  // Filter by current day for routine preview
+  const today = new Date(currentDate);
+  const todayDay = WEEKDAYS[today.getDay()];
+  const filteredByDay = activeAssignments.filter(a => a.days && a.days.split(',').includes(todayDay));
+  
+  const morningSteps = filteredByDay.filter(a => a.phase === 'Morning').sort((a,b) => a.step - b.step);
+  const eveningSteps = filteredByDay.filter(a => a.phase === 'Evening').sort((a,b) => a.step - b.step);
   const totalRoutine = morningSteps.length + eveningSteps.length;
   
   const dateStr = currentDate.toISOString().split('T')[0];
   const todaysLogKeys = new Set(logs.filter(l => l.date === dateStr).map(l => `${l.phase}|${l.step}`));
   
   let completedRoutine = 0;
-  activeAssignments.forEach(a => {
+  filteredByDay.forEach(a => {
     if (todaysLogKeys.has(`${a.phase}|${a.step}`)) completedRoutine++;
   });
   
@@ -436,7 +436,7 @@ function renderDashboard() {
   const activeSupplements = supplementsList.filter(s => s.status === 'Active');
   const totalSupp = activeSupplements.length;
   let takenSupp = 0;
-  activeSupplements.forEach(s => { if (todaySuppLog.has(`${s.timeSlot}|${s.supplement}`)) takenSupp++; });
+  activeSupplements.forEach(s => { if (todaySuppLog.has(s.supplementId)) takenSupp++; });
   document.getElementById('supplementsProgress').textContent = `${takenSupp}/${totalSupp}`;
   const suppPct = totalSupp ? Math.round(takenSupp / totalSupp * 100) : 0;
   document.getElementById('supplementsStreak').innerHTML = `<span class="trend-badge">${suppPct}% taken</span>`;
@@ -455,7 +455,7 @@ function renderDashboard() {
       </div>`;
     }).join('');
   } else {
-    morningContainer.innerHTML = '<div class="empty-state" style="padding:12px;">No morning routine</div>';
+    morningContainer.innerHTML = '<div class="empty-state" style="padding:12px;">No morning routine for today</div>';
   }
 
   // Evening preview
@@ -472,28 +472,20 @@ function renderDashboard() {
       </div>`;
     }).join('');
   } else {
-    eveningContainer.innerHTML = '<div class="empty-state" style="padding:12px;">No evening routine</div>';
+    eveningContainer.innerHTML = '<div class="empty-state" style="padding:12px;">No evening routine for today</div>';
   }
 
   // Supplements preview
   const suppContainer = document.getElementById('supplementsPreviewList');
   if (activeSupplements.length) {
-    const grouped = {};
-    activeSupplements.forEach(s => { if (!grouped[s.timeSlot]) grouped[s.timeSlot] = []; grouped[s.timeSlot].push(s); });
-    suppContainer.innerHTML = Object.keys(grouped).sort().map(slot => {
-      const items = grouped[slot].map(s => {
-        const taken = todaySuppLog.has(`${slot}|${s.supplement}`);
-        return `<div class="preview-item">
-          <div class="preview-status ${taken ? 'done' : 'pending'}">${taken ? '✓' : ''}</div>
-          <div class="preview-info">
-            ${escapeHtml(s.supplement)}
-            <div class="preview-time">${escapeHtml(s.frequency || 'Daily')}</div>
-          </div>
-        </div>`;
-      }).join('');
-      return `<div style="margin-bottom:16px;">
-        <div style="font-weight:600; font-size:13px; margin-bottom:8px; color: var(--text);">🕒 ${escapeHtml(slot)}</div>
-        ${items}
+    suppContainer.innerHTML = activeSupplements.map(s => {
+      const taken = todaySuppLog.has(s.supplementId);
+      return `<div class="preview-item">
+        <div class="preview-status ${taken ? 'done' : 'pending'}">${taken ? '✓' : ''}</div>
+        <div class="preview-info">
+          ${escapeHtml(s.name)}
+          <div class="preview-time">${escapeHtml(s.useFor || '')}</div>
+        </div>
       </div>`;
     }).join('');
   } else {
@@ -540,8 +532,7 @@ async function findExistingSpreadsheet() {
   return res.result.files?.[0]?.id || null;
 }
 
-// createFolderAndSheet function:
-
+// createFolderAndSheet function
 async function createFolderAndSheet(isRecreate = false) {
   const btnId  = isRecreate ? 'recreateFolderBtn' : 'createFolderBtn';
   const errId  = isRecreate ? 'recreateError'     : 'setupError';
@@ -590,11 +581,11 @@ async function createFolderAndSheet(isRecreate = false) {
       resource: {
         valueInputOption: 'RAW',
         data: [
-          { range: `'${PRODUCTS_SHEET}'!A1:F1`, values: [['ProductID','BrandID','Product','Use For','Status']] },
+          { range: `'${PRODUCTS_SHEET}'!A1:E1`, values: [['ProductID','BrandID','Product','Use For','Status']] },
           { range: `'${ROUTINE_SHEET}'!A1:E1`, values: [['AssignmentID','ProductID','Phase','Step','Days']] },
           { range: `'${ROUTINE_LOG_SHEET}'!A1:G1`, values: [['Date','ProductID','Phase','Step','Product','Timestamp','Notes']] },
           { range: `'${SUPPLEMENTS_SHEET}'!A1:D1`, values: [['SupplementID','Name','Use For','Status']] },
-          { range: `'${SUPPLEMENT_ROUTINE_SHEET}'!A1:E1`, values: [['AssignmentID','SupplementID','TimeSlot','Frequency','Notes']] },
+          { range: `'${SUPPLEMENT_ROUTINE_SHEET}'!A1:E1`, values: [['AssignmentID','SupplementID','TimeSlot','Days','Notes']] },
           { range: `'${SUPPLEMENTS_LOG_SHEET}'!A1:G1`, values: [['Date','TimeSlot','Supplement','Taken','Notes','Timestamp','SupplementID']] }
         ]
       }
