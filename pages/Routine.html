@@ -100,15 +100,13 @@
       <label>Use For *</label>
       <div id="useForCheckboxes"></div>
     </div>
-<div class="form-group" style="display: flex; flex-direction: row; align-items: center; gap: 12px;">
-  <label style="margin-bottom: 0;">Active / Inactive</label>
-  <div class="status-toggle active" id="productStatusToggle" onclick="toggleProductStatusUI(event)">
-    <div class="status-toggle-knob"></div>
-  </div>
-  <input type="hidden" id="productStatusInput" value="Active">
-</div>
-  <input type="hidden" id="productStatusInput" value="Active">
-</div>
+    <div class="form-group" style="display: flex; flex-direction: row; align-items: center; gap: 12px;">
+      <label style="margin-bottom: 0;">Active / Inactive</label>
+      <div class="status-toggle active" id="productStatusToggle" onclick="toggleProductStatusUI(event)">
+        <div class="status-toggle-knob"></div>
+      </div>
+      <input type="hidden" id="productStatusInput" value="Active">
+    </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeProductModal()">Cancel</button>
       <button class="btn-save" onclick="saveProduct()">Save</button>
@@ -117,13 +115,28 @@
 </div>
 
 <div class="modal-backdrop" id="assignmentModal">
-  <div class="modal"><div class="modal-handle"></div><div class="modal-title" id="assignmentModalTitle">➕ Add Routine</div>
-  <input type="hidden" id="editAssignmentId">
-  <div class="brand-filter-row"><label>Filter by Brand</label><select id="assignmentBrandFilter"></select></div>
-  <div class="form-group"><label>Product *</label><select id="assignmentProductId"></select></div>
-  <div class="form-group"><label>Phase *</label><select id="assignmentPhase"><option value="Morning">🌅 Morning</option><option value="Evening">🌙 Evening</option></select></div>
-  <div class="form-group"><label>Step (number) *</label><input type="number" id="assignmentStep" min="1" step="1" value="1"></div>
-  <div class="modal-footer"><button class="btn-cancel" onclick="closeAssignmentModal()">Cancel</button><button class="btn-save" onclick="saveAssignment()">Save</button></div>
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="assignmentModalTitle">➕ Add Routine</div>
+    <input type="hidden" id="editAssignmentId">
+    <div class="brand-filter-row"><label>Filter by Brand</label><select id="assignmentBrandFilter"></select></div>
+    <div class="form-group"><label>Product *</label><select id="assignmentProductId"></select></div>
+    <div class="form-row">
+      <div class="form-group"><label>Phase *</label><select id="assignmentPhase"><option value="Morning">🌅 Morning</option><option value="Evening">🌙 Evening</option></select></div>
+      <div class="form-group"><label>Step *</label><input type="number" id="assignmentStep" min="1" step="1" value="1" inputmode="numeric"></div>
+    </div>
+    <div class="form-group">
+      <label>📅 Days</label>
+      <div id="daysCheckboxes" style="display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; margin-top:6px;"></div>
+      <div style="display:flex; gap:12px; margin-top:8px;">
+        <button type="button" class="btn-cancel" style="flex:0; padding:6px 12px;" onclick="selectAllDays()">Select All</button>
+        <button type="button" class="btn-cancel" style="flex:0; padding:6px 12px;" onclick="unselectAllDays()">Unselect All</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeAssignmentModal()">Cancel</button>
+      <button class="btn-save" onclick="saveAssignment()">Save</button>
+    </div>
   </div>
 </div>
 
@@ -148,6 +161,9 @@ let products = [], assignments = [], logs = [];
 let actionSheetTarget = null, activeTab = 'log';
 let sortableMorning = null, sortableEvening = null, currentBrandModalBrandId = null;
 
+// Weekdays for days selection
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
 // ======================== HELPERS ============================
 function formatDateForDisplay(d) { return d.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }); }
 function formatDateISO(d) { return d.toISOString().split('T')[0]; }
@@ -164,13 +180,39 @@ function switchTab(tab) {
 
 // ======================== DATA LOADING ========================
 async function loadProducts() { if(!spreadsheetId) return; try{ const res=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId, range:`'${PRODUCTS_SHEET}'!A2:E`}); const rows=res.result.values||[]; products=rows.map(r=>({productId:r[0]||'',brandId:r[1]||'',product:r[2]||'',useFor:r[3]||'',status:r[4]||'Active'})).filter(p=>p.productId); saveProductsLocal(); }catch(e){console.error(e);} }
-async function loadAssignments() { if(!spreadsheetId) return; try{ const res=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId, range:`'${ROUTINE_SHEET}'!A2:D`}); const rows=res.result.values||[]; assignments=rows.map(r=>({assignmentId:r[0]||'',productId:r[1]||'',phase:r[2]||'',step:parseInt(r[3])||0})).filter(a=>a.assignmentId); saveAssignmentsLocal(); }catch(e){console.error(e);} }
+async function loadAssignments() { if(!spreadsheetId) return; try{ const res=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId, range:`'${ROUTINE_SHEET}'!A2:E`}); const rows=res.result.values||[]; assignments=rows.map(r=>({assignmentId:r[0]||'',productId:r[1]||'',phase:r[2]||'',step:parseInt(r[3])||0, days: r[4] || 'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday'})).filter(a=>a.assignmentId); saveAssignmentsLocal(); }catch(e){console.error(e);} }
 async function loadLogs() { if(!spreadsheetId) return; try{ const res=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId, range:`'${ROUTINE_LOG_SHEET}'!A2:G`}); const rows=res.result.values||[]; logs=rows.map(r=>({date:r[0]||'',productId:r[1]||'',phase:r[2]||'',step:parseInt(r[3])||0,productName:r[4]||'',timestamp:r[5]||'',notes:r[6]||''})); }catch(e){console.error(e);} }
 async function loadTodaysLogs() { await loadLogs(); if(activeTab==='log') renderLogTab(); }
 function saveProductsLocal() { if(currentUserEmail) localStorage.setItem(`products_${currentUserEmail}`, JSON.stringify(products)); }
 function loadProductsLocal() { if(currentUserEmail){ const p=localStorage.getItem(`products_${currentUserEmail}`); if(p) products=JSON.parse(p); } }
 function saveAssignmentsLocal() { if(currentUserEmail) localStorage.setItem(`assignments_${currentUserEmail}`, JSON.stringify(assignments)); }
 function loadAssignmentsLocal() { if(currentUserEmail){ const a=localStorage.getItem(`assignments_${currentUserEmail}`); if(a) assignments=JSON.parse(a); } }
+
+// ======================== DAYS CHECKBOXES ========================
+function renderDayCheckboxes(selectedDaysStr = '') {
+  const selectedSet = new Set(selectedDaysStr.split(',').map(s => s.trim()).filter(Boolean));
+  const container = document.getElementById('daysCheckboxes');
+  container.innerHTML = WEEKDAYS.map(day => {
+    const checked = selectedSet.has(day) ? 'checked' : '';
+    return `<label style="display:flex; align-items:center; gap:8px; margin:0; padding:2px 0; font-size:12px; cursor:pointer;">
+      <input type="checkbox" value="${day}" ${checked} style="margin:0; width:16px; height:16px;">
+      <span>${day}</span>
+    </label>`;
+  }).join('');
+}
+
+function getSelectedDays() {
+  return Array.from(document.querySelectorAll('#daysCheckboxes input:checked'))
+              .map(cb => cb.value).join(',');
+}
+
+function selectAllDays() {
+  document.querySelectorAll('#daysCheckboxes input').forEach(cb => cb.checked = true);
+}
+
+function unselectAllDays() {
+  document.querySelectorAll('#daysCheckboxes input').forEach(cb => cb.checked = false);
+}
 
 // ======================== TODAY'S ROUTINE ========================
 function renderLogTab() {
@@ -179,10 +221,16 @@ function renderLogTab() {
   const todaysLogMap = new Map(); logs.filter(l=>l.date===dateStr).forEach(l=>todaysLogMap.set(`${l.phase}|${l.step}`,true));
   const productMap = new Map(); products.forEach(p=>productMap.set(p.productId,p));
   const activeAssignments = assignments.filter(a=>{ const p=productMap.get(a.productId); return p && p.status==='Active'; });
+  
+  // Filter by current day
+  const today = new Date(currentDate);
+  const todayDay = WEEKDAYS[today.getDay()];
+  const filteredByDay = activeAssignments.filter(a => a.days && a.days.split(',').includes(todayDay));
+  
   const hideCompleted = document.getElementById('hideCompletedCheckbox').checked;
   let total=0, completed=0, html='';
   for(const phase of ['Morning','Evening']){
-    let full = activeAssignments.filter(a=>a.phase===phase).sort((a,b)=>a.step-b.step);
+    let full = filteredByDay.filter(a=>a.phase===phase).sort((a,b)=>a.step-b.step);
     let display = hideCompleted ? full.filter(a=>!todaysLogMap.has(`${a.phase}|${a.step}`)) : full;
     if(!full.length) continue;
     total+=full.length; completed+=full.filter(a=>todaysLogMap.has(`${a.phase}|${a.step}`)).length;
@@ -195,7 +243,7 @@ function renderLogTab() {
     }
     html+=`</div>`;
   }
-  container.innerHTML = html || '<div class="empty-state">No active assignments. Add some in "My Routine".</div>';
+  container.innerHTML = html || '<div class="empty-state">No active assignments for today. Add some in "My Routine".</div>';
   document.getElementById('progressFill').style.width = total ? (completed/total*100)+'%' : '0%';
 }
 async function toggleLog(productId,phase,step,productName){
@@ -215,15 +263,6 @@ async function toggleLog(productId,phase,step,productName){
     }
     await loadLogs(); renderLogTab();
   } catch(e){ console.error(e); showToast('❌ Failed','error'); }
-}
-function getFreqBadgeClass(f) {
-  switch(f) {
-    case 'Daily': return 'freq-daily';
-    case 'Once a Week': return 'freq-once-a-week';
-    case 'Twice a Week': return 'freq-twice-a-week';
-    case '3 Times a Week': return 'freq-3-times-a-week';
-    default: return 'freq-daily';
-  }
 }
 
 // ======================== MY ROUTINE ========================
@@ -284,6 +323,7 @@ function openAssignmentModal(id=null){
       document.getElementById('assignmentProductId').value = assignment.productId;
       document.getElementById('assignmentPhase').value = assignment.phase;
       document.getElementById('assignmentStep').value = assignment.step;
+      renderDayCheckboxes(assignment.days || '');
     }
   } else {
     updateProductDropdown();
@@ -292,6 +332,7 @@ function openAssignmentModal(id=null){
     const phaseAssignments = assignments.filter(a => a.phase === phase);
     const maxStep = phaseAssignments.length ? Math.max(...phaseAssignments.map(a => a.step)) : 0;
     document.getElementById('assignmentStep').value = maxStep + 1;
+    renderDayCheckboxes('Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday'); // default all days
   }
   document.getElementById('assignmentModal').classList.add('open');
 }
@@ -301,11 +342,12 @@ async function saveAssignment(){
   const productId = document.getElementById('assignmentProductId').value;
   const phase = document.getElementById('assignmentPhase').value;
   let step = parseInt(document.getElementById('assignmentStep').value);
+  const days = getSelectedDays();
   if (!productId || !phase || isNaN(step)) { showToast('All fields required', 'error'); return; }
   let newId = assignmentId;
   let isNew = false;
   if (!newId) { newId = generateAssignmentId(); isNew = true; }
-  const newAssignment = { assignmentId: newId, productId, phase, step };
+  const newAssignment = { assignmentId: newId, productId, phase, step, days };
   if (isNew) assignments.push(newAssignment);
   else { const idx = assignments.findIndex(a => a.assignmentId === newId); if (idx !== -1) assignments[idx] = newAssignment; }
   // Reorder steps for the phase
@@ -444,9 +486,9 @@ async function saveProductsToSheet(){
 async function saveAssignmentsToSheet(){
   if(!spreadsheetId) return false;
   try{
-    await gapi.client.sheets.spreadsheets.values.clear({spreadsheetId, range:`'${ROUTINE_SHEET}'!A2:D`});
+    await gapi.client.sheets.spreadsheets.values.clear({spreadsheetId, range:`'${ROUTINE_SHEET}'!A2:E`});
     if(assignments.length){
-      const rows=assignments.map(a=>[a.assignmentId,a.productId,a.phase,a.step]);
+      const rows=assignments.map(a=>[a.assignmentId,a.productId,a.phase,a.step,a.days]);
       await gapi.client.sheets.spreadsheets.values.update({spreadsheetId, range:`'${ROUTINE_SHEET}'!A2`, valueInputOption:'RAW', resource:{values:rows}});
     }
     saveAssignmentsLocal(); return true;
@@ -467,9 +509,16 @@ async function ensureSheets(){
         await gapi.client.sheets.spreadsheets.batchUpdate({spreadsheetId, resource:{requests:[{addSheet:{properties:{title:sheet}}}]}});
         let headers=[];
         if(sheet===PRODUCTS_SHEET) headers=[['ProductID','BrandID','Product','Use For','Status']];
-        else if(sheet===ROUTINE_SHEET) headers=[['AssignmentID','ProductID','Phase','Step']];
+        else if(sheet===ROUTINE_SHEET) headers=[['AssignmentID','ProductID','Phase','Step','Days']];
         else if(sheet===ROUTINE_LOG_SHEET) headers=[['Date','ProductID','Phase','Step','Product','Timestamp','Notes']];
         if(headers.length) await gapi.client.sheets.spreadsheets.values.update({spreadsheetId, range:`'${sheet}'!A1:${String.fromCharCode(64+headers[0].length)}1`, valueInputOption:'RAW', resource:{values:headers}});
+      } else if (sheet === ROUTINE_SHEET) {
+        // Ensure Days column exists (migration for existing sheets)
+        const headerRes = await gapi.client.sheets.spreadsheets.values.get({spreadsheetId, range:`'${ROUTINE_SHEET}'!A1:E1`});
+        const headers = headerRes.result.values?.[0] || [];
+        if (headers.length < 5) {
+          await gapi.client.sheets.spreadsheets.values.update({spreadsheetId, range:`'${ROUTINE_SHEET}'!E1`, valueInputOption:'RAW', resource:{values:[['Days']]}});
+        }
       }
     }
   }catch(e){ console.warn(e); }
@@ -514,6 +563,7 @@ document.getElementById('productModal').addEventListener('click',(e)=>{ if(e.tar
 document.getElementById('assignmentModal').addEventListener('click',(e)=>{ if(e.target===e.currentTarget) closeAssignmentModal(); });
 renderBottomNav('routine');
 initPage();
+
 // Toggle function for product status in the modal
 function toggleProductStatusUI(event) {
   const toggle = document.getElementById('productStatusToggle');
