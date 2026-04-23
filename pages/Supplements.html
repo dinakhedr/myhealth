@@ -82,7 +82,14 @@
     </div>
     <div class="form-group">
       <label>Use For (health concerns)</label>
-      <div id="suppUseForCheckboxes" style="display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; margin-top:6px;"></div>
+      <div id="suppUseForCheckboxes"></div>
+    </div>
+    <div class="form-group" style="display: flex; flex-direction: row; align-items: center; gap: 12px;">
+      <label style="margin-bottom: 0;">Active / Inactive</label>
+      <div class="status-toggle active" id="suppStatusToggle" onclick="toggleSuppStatusUI(event)">
+        <div class="status-toggle-knob"></div>
+      </div>
+      <input type="hidden" id="suppStatusInput" value="Active">
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeSupplementModal()">Cancel</button>
@@ -130,7 +137,7 @@
   </div>
 </div>
 
-<!-- Action Sheet for assignments -->
+<!-- Action Sheet for assignments & supplements -->
 <div class="sheet-backdrop" id="actionSheet">
   <div class="sheet">
     <div class="sheet-handle"></div>
@@ -209,6 +216,7 @@ let supplementAssignments = [];  // Routine assignments (with days, timeSlot, no
 let supplementLogs = [];         // Logs
 let actionSheetTarget = null;
 let activeTab = 'log';
+let actionSheetType = null;      // 'supplement' or 'assignment'
 let sortableInstances = {};
 
 // ======================== HELPERS ===========================
@@ -238,7 +246,7 @@ function switchTab(tab) {
   else renderRoutineTab();
 }
 
-// Helper: convert time string to sortable number
+// Convert time string to sortable number
 function getTimeValue(timeStr) {
   if (!timeStr) return 9999;
   const lower = timeStr.toLowerCase().trim();
@@ -339,7 +347,6 @@ function renderLogTab() {
   const todaysTaken = new Set(supplementLogs.filter(l => l.date === dateStr && l.taken).map(l => l.supplementId));
   const supplementMap = new Map(supplements.map(s => [s.supplementId, s]));
 
-  // Filter active assignments by current day
   const today = new Date(currentDate);
   const todayDay = WEEKDAYS[today.getDay()];
   const activeAssignments = supplementAssignments.filter(a => {
@@ -352,7 +359,6 @@ function renderLogTab() {
     return;
   }
 
-  // Group by time slot
   const grouped = {};
   activeAssignments.forEach(a => { if (!grouped[a.timeSlot]) grouped[a.timeSlot] = []; grouped[a.timeSlot].push(a); });
 
@@ -370,9 +376,7 @@ function renderLogTab() {
           </div>
           <div class="step-info">
             <div class="step-name">${escapeHtml(supp.name)}</div>
-            <div class="step-desc">
-              ${a.notes ? `<span class="step-brand">${escapeHtml(a.notes)}</span>` : ''}
-            </div>
+            <div class="step-desc">${a.notes ? `<span class="step-brand">${escapeHtml(a.notes)}</span>` : ''}</div>
           </div>
         </div>`;
     }
@@ -412,13 +416,12 @@ async function toggleLog(supplementId, supplementName, timeSlot) {
   } catch (e) { console.error(e); showToast('❌ Failed', 'error'); }
 }
 
-// ======================== RENDER ROUTINE TAB (Supplement Routine, grouped by time slot) =====================
+// ======================== RENDER ROUTINE TAB =====================
 function renderRoutineTab() {
   const container = document.getElementById('routineGroupsContainer');
   const supplementMap = new Map(supplements.map(s => [s.supplementId, s]));
   const validAssignments = supplementAssignments.filter(a => supplementMap.has(a.supplementId));
 
-  // Group by time slot
   const groups = {};
   validAssignments.forEach(a => {
     if (!groups[a.timeSlot]) groups[a.timeSlot] = [];
@@ -450,7 +453,7 @@ function renderRoutineTab() {
             <div class="assignment-use-for-supp">${escapeHtml(supp.useFor || '')}</div>
             <div class="assignment-days-supp">📅 ${escapeHtml(daysDisplay)}</div>
           </div>
-          <button class="more-btn" onclick="openActionSheet('${a.assignmentId}')">⋮</button>
+          <button class="more-btn" onclick="openActionSheet('assignment', '${a.assignmentId}')">⋮</button>
         </div>`;
     }
     html += `</div></div>`;
@@ -513,7 +516,7 @@ function renderSupplementsCard() {
   for (const s of sorted) {
     const statusClass = s.status === 'Active' ? 'active' : 'inactive';
     html += `
-      <div class="supplement-list-item">
+      <div class="supplement-list-item" data-id="${s.supplementId}">
         <div class="supplement-info">
           <div class="supplement-name">${escapeHtml(s.name)}</div>
           <div class="supplement-meta">${escapeHtml(s.useFor || '')}</div>
@@ -521,8 +524,7 @@ function renderSupplementsCard() {
         <div class="status-toggle ${statusClass}" onclick="toggleSupplementStatus('${s.supplementId}', event)">
           <div class="status-toggle-knob"></div>
         </div>
-        <button class="more-btn" onclick="openSupplementModal('${s.supplementId}'); event.stopPropagation();">✏️</button>
-        <button class="more-btn" style="color:var(--danger);" onclick="deleteSupplement('${s.supplementId}'); event.stopPropagation();">🗑️</button>
+        <button class="more-btn" onclick="openActionSheet('supplement', '${s.supplementId}'); event.stopPropagation();">⋮</button>
       </div>`;
   }
   container.innerHTML = html;
@@ -544,15 +546,28 @@ function openSupplementModal(supplementId = null) {
   const isEdit = !!supplementId;
   document.getElementById('modalTitle').innerText = isEdit ? '✏️ Edit Supplement' : '➕ Add Supplement';
   document.getElementById('editSupplementId').value = supplementId || '';
+
+  const statusToggle = document.getElementById('suppStatusToggle');
+  const statusInput = document.getElementById('suppStatusInput');
+
   if (isEdit) {
     const supp = supplements.find(s => s.supplementId === supplementId);
     if (supp) {
       document.getElementById('suppName').value = supp.name;
       renderUseForCheckboxesGeneric('suppUseForCheckboxes', USE_FOR_OPTIONS_SUPP, supp.useFor || '');
+      if (supp.status === 'Active') {
+        statusToggle.classList.add('active'); statusToggle.classList.remove('inactive');
+        statusInput.value = 'Active';
+      } else {
+        statusToggle.classList.add('inactive'); statusToggle.classList.remove('active');
+        statusInput.value = 'Inactive';
+      }
     }
   } else {
     document.getElementById('suppName').value = '';
     renderUseForCheckboxesGeneric('suppUseForCheckboxes', USE_FOR_OPTIONS_SUPP, '');
+    statusToggle.classList.add('active'); statusToggle.classList.remove('inactive');
+    statusInput.value = 'Active';
   }
   document.getElementById('supplementModal').classList.add('open');
 }
@@ -561,15 +576,28 @@ function closeSupplementModal() {
   document.getElementById('supplementModal').classList.remove('open');
 }
 
+function toggleSuppStatusUI(event) {
+  const toggle = document.getElementById('suppStatusToggle');
+  const input = document.getElementById('suppStatusInput');
+  if (toggle.classList.contains('active')) {
+    toggle.classList.remove('active'); toggle.classList.add('inactive');
+    input.value = 'Inactive';
+  } else {
+    toggle.classList.remove('inactive'); toggle.classList.add('active');
+    input.value = 'Active';
+  }
+}
+
 async function saveSupplement() {
   const id = document.getElementById('editSupplementId').value;
   const name = document.getElementById('suppName').value.trim();
   const useFor = getSelectedUseForGeneric('suppUseForCheckboxes');
+  const status = document.getElementById('suppStatusInput').value;
   if (!name) { showToast('Supplement name required', 'error'); return; }
   let newId = id;
   let isNew = false;
   if (!newId) { newId = generateSupplementId(); isNew = true; }
-  const newSupp = { supplementId: newId, name, useFor, status: 'Active' };
+  const newSupp = { supplementId: newId, name, useFor, status };
   if (isNew) supplements.push(newSupp);
   else { const idx = supplements.findIndex(s => s.supplementId === newId); if (idx !== -1) supplements[idx] = newSupp; }
   closeSupplementModal();
@@ -578,18 +606,6 @@ async function saveSupplement() {
   renderRoutineTab();
   if (activeTab === 'log') renderLogTab();
   showToast(isNew ? '✅ Supplement added' : '✅ Updated');
-}
-
-async function deleteSupplement(supplementId) {
-  if (!confirm('Delete this supplement? It will also remove its routine assignments.')) return;
-  supplementAssignments = supplementAssignments.filter(a => a.supplementId !== supplementId);
-  supplements = supplements.filter(s => s.supplementId !== supplementId);
-  await saveSupplementsToSheet();
-  await saveAssignmentsToSheet();
-  renderSupplementsCard();
-  renderRoutineTab();
-  if (activeTab === 'log') renderLogTab();
-  showToast('🗑️ Supplement deleted');
 }
 
 async function saveSupplementsToSheet() {
@@ -667,16 +683,65 @@ async function saveAssignmentsToSheet() {
 }
 
 // ======================== ACTION SHEET =====================
-function openActionSheet(assignmentId) {
-  actionSheetTarget = assignmentId;
-  const a = supplementAssignments.find(a => a.assignmentId === assignmentId);
-  const supp = supplements.find(s => s.supplementId === a?.supplementId);
-  document.getElementById('sheetTitle').textContent = supp ? supp.name : 'Assignment';
+function openActionSheet(type, id) {
+  actionSheetType = type;
+  actionSheetTarget = id;
+  let title = '';
+  if (type === 'supplement') {
+    const supp = supplements.find(s => s.supplementId === id);
+    title = supp ? supp.name : 'Supplement';
+  } else {
+    const a = supplementAssignments.find(a => a.assignmentId === id);
+    if (a) {
+      const supp = supplements.find(s => s.supplementId === a.supplementId);
+      title = supp ? `${supp.name} · ${a.timeSlot}` : 'Routine';
+    }
+  }
+  document.getElementById('sheetTitle').textContent = title;
   document.getElementById('actionSheet').classList.add('open');
 }
-function closeActionSheet() { document.getElementById('actionSheet').classList.remove('open'); actionSheetTarget = null; }
-function sheetEdit() { if (!actionSheetTarget) return; const id = actionSheetTarget; closeActionSheet(); openAssignmentModal(id); }
-async function sheetDelete() { if (!actionSheetTarget) return; const id = actionSheetTarget; closeActionSheet(); supplementAssignments = supplementAssignments.filter(a => a.assignmentId !== id); await saveAssignmentsToSheet(); renderRoutineTab(); if (activeTab === 'log') renderLogTab(); showToast('🗑️ Routine deleted'); }
+
+function closeActionSheet() {
+  document.getElementById('actionSheet').classList.remove('open');
+  actionSheetTarget = null;
+  actionSheetType = null;
+}
+
+function sheetEdit() {
+  if (!actionSheetTarget) return;
+  const id = actionSheetTarget;
+  const type = actionSheetType;
+  closeActionSheet();
+  if (type === 'supplement') {
+    openSupplementModal(id);
+  } else {
+    openAssignmentModal(id);
+  }
+}
+
+async function sheetDelete() {
+  if (!actionSheetTarget) return;
+  const id = actionSheetTarget;
+  const type = actionSheetType;
+  closeActionSheet();
+  if (type === 'supplement') {
+    if (!confirm('Delete this supplement? It will also remove its routine assignments.')) return;
+    supplementAssignments = supplementAssignments.filter(a => a.supplementId !== id);
+    supplements = supplements.filter(s => s.supplementId !== id);
+    await saveSupplementsToSheet();
+    await saveAssignmentsToSheet();
+    renderSupplementsCard();
+    renderRoutineTab();
+    if (activeTab === 'log') renderLogTab();
+    showToast('🗑️ Supplement deleted');
+  } else {
+    supplementAssignments = supplementAssignments.filter(a => a.assignmentId !== id);
+    await saveAssignmentsToSheet();
+    renderRoutineTab();
+    if (activeTab === 'log') renderLogTab();
+    showToast('🗑️ Routine deleted');
+  }
+}
 
 // ======================== SYNC & INIT ========================
 async function syncAll() {
@@ -700,11 +765,9 @@ async function ensureSheets() {
         const range = `${sheet.name}!A1:${String.fromCharCode(64 + sheet.headers.length)}1`;
         await gapi.client.sheets.spreadsheets.values.update({ spreadsheetId, range, valueInputOption: 'RAW', resource: { values: [sheet.headers] } });
       } else if (sheet.name === SUPPLEMENT_ROUTINE_SHEET) {
-        // Migrate if Days column missing (old sheets)
         const headerRes = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId, range: `${SUPPLEMENT_ROUTINE_SHEET}!A1:E1` });
         const headers = headerRes.result.values?.[0] || [];
         if (headers.length < 4) {
-          // Add missing columns
           if (!headers.includes('Days')) {
             await gapi.client.sheets.spreadsheets.values.update({ spreadsheetId, range: `${SUPPLEMENT_ROUTINE_SHEET}!D1`, valueInputOption: 'RAW', resource: { values: [['Days']] } });
           }
