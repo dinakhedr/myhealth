@@ -51,6 +51,22 @@ const USE_FOR_OPTIONS = [
   'Sun protection'
 ];
 
+// Use for options for supplements (health concerns)
+const USE_FOR_OPTIONS_SUPP = [
+  'Acid reflux / heartburn',
+  'Iron deficiency / anemia',
+  'Bone health',
+  'Pregnancy support / fetal development',
+  'Energy & metabolism',
+  'Cough / bronchial congestion',
+  'Skin health (acne, wound healing)',
+  'Nerve function & neuropathy',
+  'Heart health / cholesterol balance',
+  'Immune support',
+  'Fatigue / low energy',
+  'Joint health'
+];
+
 // Prefix for Product IDs (e.g., PROD-7f3a9c)
 const PRODUCT_ID_PREFIX = 'PROD-';
 
