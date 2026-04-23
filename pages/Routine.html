@@ -100,11 +100,13 @@
       <label>Use For *</label>
       <div id="useForCheckboxes"></div>
     </div>
-<div class="form-group">
-  <label>Active / Inactive</label>
+<div class="form-group" style="display: flex; flex-direction: row; align-items: flex-start; gap: 12px;">
+  <label style="margin-bottom: 0;">Active / Inactive</label>
   <div class="status-toggle active" id="productStatusToggle" onclick="toggleProductStatusUI(event)">
     <div class="status-toggle-knob"></div>
   </div>
+  <input type="hidden" id="productStatusInput" value="Active">
+</div>
   <input type="hidden" id="productStatusInput" value="Active">
 </div>
     <div class="modal-footer">
