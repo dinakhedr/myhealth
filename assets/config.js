@@ -54,17 +54,18 @@ const USE_FOR_OPTIONS = [
 // Use for options for supplements (health concerns)
 const USE_FOR_OPTIONS_SUPP = [
   'Acid reflux / heartburn',
-  'Iron deficiency / anemia',
   'Bone health',
-  'Pregnancy support / fetal development',
-  'Energy & metabolism',
   'Cough / bronchial congestion',
-  'Skin health (acne, wound healing)',
-  'Nerve function & neuropathy',
+  'Energy & metabolism',
+  'Fatigue / low energy',
+  'Hair & Nair Growth',
   'Heart health / cholesterol balance',
   'Immune support',
-  'Fatigue / low energy',
-  'Joint health'
+  'Iron deficiency / anemia',
+  'Joint health',
+  'Nerve function & neuropathy',
+  'Pregnancy support / fetal development',
+  'Skin health (acne, wound healing)'
 ];
 
 // Prefix for Product IDs (e.g., PROD-7f3a9c)
