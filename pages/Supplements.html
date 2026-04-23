@@ -38,22 +38,23 @@
     <button class="hdr-icon-btn" onclick="changeDate(1)">→</button>
   </div>
 
-  <div class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('log')">📋 Today's Supplements</button>
-    <button class="tab-btn" onclick="switchTab('routine')">📌 Supplement Routine</button>
-  </div>
-
-  <!-- Tab 1: Today's Supplements (Log) -->
-  <div id="logTab" class="tab-content active">
-    <div id="supplementsLogContainer"></div>
-  </div>
-
-  <!-- Tab 2: Supplement Routine (Assignments grouped by time slot) -->
-  <div id="routineTab" class="tab-content" style="display:none">
-    <div class="add-btn-container">
-      <button class="add-btn" onclick="openAssignmentModal()">➕ Add Routine</button>
+  <!-- tabs inside a card (matching Routine style) -->
+  <div class="card" style="padding: 0; overflow: hidden;">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('log')">📋 Today's Supplements</button>
+      <button class="tab-btn" onclick="switchTab('routine')">📌 Supplement Routine</button>
     </div>
-    <div id="routineGroupsContainer"></div>
+
+    <div id="logTab" class="tab-content active">
+      <div id="supplementsLogContainer"></div>
+    </div>
+
+    <div id="routineTab" class="tab-content" style="display:none">
+      <div class="add-btn-container">
+        <button class="add-product-card-btn" onclick="openAssignmentModal()" style="width:100%; justify-content:center;">➕ Add Routine</button>
+      </div>
+      <div id="routineGroupsContainer"></div>
+    </div>
   </div>
 
   <!-- All Supplements Card (bottom) -->
@@ -80,8 +81,8 @@
       <input type="text" id="suppName" placeholder="e.g. Vitamin D3">
     </div>
     <div class="form-group">
-      <label>Use For</label>
-      <input type="text" id="suppUseFor" placeholder="e.g. Bone health, immunity">
+      <label>Use For (health concerns)</label>
+      <div id="suppUseForCheckboxes" style="display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; margin-top:6px;"></div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeSupplementModal()">Cancel</button>
@@ -111,8 +112,12 @@
       </datalist>
     </div>
     <div class="form-group">
-      <label>Frequency</label>
-      <input type="text" id="assignmentFrequency" placeholder="e.g., Daily, Every other day">
+      <label>📅 Days</label>
+      <div id="daysCheckboxes" style="display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; margin-top:6px;"></div>
+      <div style="display:flex; gap:12px; margin-top:8px; flex-wrap:wrap;">
+        <button type="button" class="btn-cancel" style="flex:0; padding:6px 12px; white-space:nowrap;" onclick="selectAllDays('daysCheckboxes')">Select All</button>
+        <button type="button" class="btn-cancel" style="flex:0; padding:6px 12px; white-space:nowrap;" onclick="unselectAllDays('daysCheckboxes')">Unselect All</button>
+      </div>
     </div>
     <div class="form-group">
       <label>Notes (optional)</label>
@@ -130,14 +135,69 @@
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title" id="sheetTitle">Options</div>
-    <button class="sheet-action" id="sheetEditBtn" onclick="sheetEdit()">
-      <span class="sheet-action-icon">✏️</span>Edit
-    </button>
-    <button class="sheet-action danger" id="sheetDeleteBtn" onclick="sheetDelete()">
-      <span class="sheet-action-icon">🗑️</span>Delete
-    </button>
+    <button class="sheet-action" id="sheetEditBtn" onclick="sheetEdit()"><span class="sheet-action-icon">✏️</span>Edit</button>
+    <button class="sheet-action danger" id="sheetDeleteBtn" onclick="sheetDelete()"><span class="sheet-action-icon">🗑️</span>Delete</button>
   </div>
 </div>
+
+<style>
+  /* Additional style for time badge (similar to step badge) */
+  .time-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 70px;
+    height: 32px;
+    background: var(--brand-grad);
+    color: white;
+    font-weight: 700;
+    font-size: 12px;
+    border-radius: 10px;
+    padding: 0 8px;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+  .assignment-item-supp {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .assignment-item-supp .drag-handle {
+    margin-top: 4px;
+  }
+  .assignment-details-supp {
+    flex: 1;
+  }
+  .assignment-product-supp {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .assignment-use-for-supp {
+    font-size: 11px;
+    color: var(--text-2);
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .assignment-days-supp {
+    font-size: 10px;
+    color: var(--text-3);
+  }
+  .more-btn {
+    align-self: center;
+  }
+  /* Today's supplement log – simple checklist */
+  .supplement-log-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+</style>
 
 <script>
 // ======================== STATE ============================
@@ -145,7 +205,7 @@ let spreadsheetId = null;
 let currentUserEmail = null;
 let currentDate = new Date();
 let supplements = [];            // Master list
-let supplementAssignments = [];  // Routine assignments
+let supplementAssignments = [];  // Routine assignments (with days, timeSlot, notes)
 let supplementLogs = [];         // Logs
 let actionSheetTarget = null;
 let activeTab = 'log';
@@ -178,16 +238,14 @@ function switchTab(tab) {
   else renderRoutineTab();
 }
 
-  // Helper: convert time string like "9:00 AM" or "Bedtime" to a sortable number
+// Helper: convert time string to sortable number
 function getTimeValue(timeStr) {
   if (!timeStr) return 9999;
   const lower = timeStr.toLowerCase().trim();
-  // Handle special cases
   if (lower === 'bedtime') return 23;
   if (lower === 'morning') return 8;
   if (lower === 'afternoon') return 13;
   if (lower === 'evening') return 18;
-  // Parse "9:00 AM" / "4:30 PM"
   const match = timeStr.match(/(\d+)(?::(\d+))?\s*(am|pm)/i);
   if (match) {
     let hour = parseInt(match[1], 10);
@@ -197,9 +255,9 @@ function getTimeValue(timeStr) {
     if (meridiem === 'am' && hour === 12) hour = 0;
     return hour + minute / 60;
   }
-  // Fallback: alphabetical
   return 9999;
 }
+
 // ======================== DATA LOADING ========================
 async function loadSupplements() {
   if (!spreadsheetId) return;
@@ -229,7 +287,7 @@ async function loadAssignments() {
       assignmentId: r[0] || '',
       supplementId: r[1] || '',
       timeSlot: r[2] || '',
-      frequency: r[3] || '',
+      days: r[3] || 'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday',
       notes: r[4] || ''
     })).filter(a => a.assignmentId);
     saveAssignmentsLocal();
@@ -274,19 +332,23 @@ function loadAssignmentsLocal() {
   }
 }
 
-// ======================== RENDER LOG TAB =====================
+// ======================== RENDER LOG TAB (Today's Supplements) =====================
 function renderLogTab() {
   const container = document.getElementById('supplementsLogContainer');
   const dateStr = formatDateISO(currentDate);
   const todaysTaken = new Set(supplementLogs.filter(l => l.date === dateStr && l.taken).map(l => l.supplementId));
   const supplementMap = new Map(supplements.map(s => [s.supplementId, s]));
+
+  // Filter active assignments by current day
+  const today = new Date(currentDate);
+  const todayDay = WEEKDAYS[today.getDay()];
   const activeAssignments = supplementAssignments.filter(a => {
     const supp = supplementMap.get(a.supplementId);
-    return supp && supp.status === 'Active';
+    return supp && supp.status === 'Active' && a.days && a.days.split(',').includes(todayDay);
   });
 
   if (activeAssignments.length === 0) {
-    container.innerHTML = '<div class="empty-state">No active supplement routine. Add one in "Supplement Routine".</div>';
+    container.innerHTML = '<div class="empty-state">No supplements scheduled for today. Add a routine.</div>';
     return;
   }
 
@@ -309,7 +371,6 @@ function renderLogTab() {
           <div class="step-info">
             <div class="step-name">${escapeHtml(supp.name)}</div>
             <div class="step-desc">
-              <span class="freq-badge freq-daily">${escapeHtml(a.frequency || 'Daily')}</span>
               ${a.notes ? `<span class="step-brand">${escapeHtml(a.notes)}</span>` : ''}
             </div>
           </div>
@@ -351,7 +412,7 @@ async function toggleLog(supplementId, supplementName, timeSlot) {
   } catch (e) { console.error(e); showToast('❌ Failed', 'error'); }
 }
 
-// ======================== RENDER ROUTINE TAB (grouped by time slot) =====================
+// ======================== RENDER ROUTINE TAB (Supplement Routine, grouped by time slot) =====================
 function renderRoutineTab() {
   const container = document.getElementById('routineGroupsContainer');
   const supplementMap = new Map(supplements.map(s => [s.supplementId, s]));
@@ -377,13 +438,17 @@ function renderRoutineTab() {
     for (const a of groups[slot]) {
       const supp = supplementMap.get(a.supplementId);
       if (!supp) continue;
+      const daysArray = a.days ? a.days.split(',') : [];
+      const isAllDays = daysArray.length === 7 && WEEKDAYS.every(day => daysArray.includes(day));
+      const daysDisplay = isAllDays ? 'Daily' : (a.days ? a.days.replace(/,/g, ', ') : '');
       html += `
-        <div class="assignment-item" data-id="${a.assignmentId}">
+        <div class="assignment-item-supp" data-id="${a.assignmentId}">
           <div class="drag-handle">☰</div>
-          <div class="assignment-info">
-            <div class="assignment-name">${escapeHtml(supp.name)}</div>
-            <div class="assignment-brand">${escapeHtml(a.frequency || 'Daily')}</div>
-            <div class="assignment-phase-step">${escapeHtml(a.notes || '')}</div>
+          <div class="time-badge">${escapeHtml(a.timeSlot)}</div>
+          <div class="assignment-details-supp">
+            <div class="assignment-product-supp">${escapeHtml(supp.name)}</div>
+            <div class="assignment-use-for-supp">${escapeHtml(supp.useFor || '')}</div>
+            <div class="assignment-days-supp">📅 ${escapeHtml(daysDisplay)}</div>
           </div>
           <button class="more-btn" onclick="openActionSheet('${a.assignmentId}')">⋮</button>
         </div>`;
@@ -412,7 +477,7 @@ async function handleReorder() {
   const newAssignments = [];
   document.querySelectorAll('.assignment-list').forEach(list => {
     const newSlot = list.dataset.slot;
-    Array.from(list.querySelectorAll('.assignment-item')).forEach((el, idx) => {
+    Array.from(list.querySelectorAll('.assignment-item-supp')).forEach((el, idx) => {
       const id = el.dataset.id;
       const existing = supplementAssignments.find(a => a.assignmentId === id);
       if (existing) {
@@ -483,11 +548,11 @@ function openSupplementModal(supplementId = null) {
     const supp = supplements.find(s => s.supplementId === supplementId);
     if (supp) {
       document.getElementById('suppName').value = supp.name;
-      document.getElementById('suppUseFor').value = supp.useFor;
+      renderUseForCheckboxesGeneric('suppUseForCheckboxes', USE_FOR_OPTIONS_SUPP, supp.useFor || '');
     }
   } else {
     document.getElementById('suppName').value = '';
-    document.getElementById('suppUseFor').value = '';
+    renderUseForCheckboxesGeneric('suppUseForCheckboxes', USE_FOR_OPTIONS_SUPP, '');
   }
   document.getElementById('supplementModal').classList.add('open');
 }
@@ -499,7 +564,7 @@ function closeSupplementModal() {
 async function saveSupplement() {
   const id = document.getElementById('editSupplementId').value;
   const name = document.getElementById('suppName').value.trim();
-  const useFor = document.getElementById('suppUseFor').value.trim();
+  const useFor = getSelectedUseForGeneric('suppUseForCheckboxes');
   if (!name) { showToast('Supplement name required', 'error'); return; }
   let newId = id;
   let isNew = false;
@@ -553,13 +618,13 @@ function openAssignmentModal(assignmentId = null) {
     if (a) {
       document.getElementById('assignmentSupplementId').value = a.supplementId;
       document.getElementById('assignmentTimeSlot').value = a.timeSlot;
-      document.getElementById('assignmentFrequency').value = a.frequency;
       document.getElementById('assignmentNotes').value = a.notes;
+      renderDayCheckboxes('daysCheckboxes', a.days || '');
     }
   } else {
     document.getElementById('assignmentTimeSlot').value = '';
-    document.getElementById('assignmentFrequency').value = 'Daily';
     document.getElementById('assignmentNotes').value = '';
+    renderDayCheckboxes('daysCheckboxes', 'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday');
   }
   document.getElementById('assignmentModal').classList.add('open');
 }
@@ -572,13 +637,13 @@ async function saveAssignment() {
   const id = document.getElementById('editAssignmentId').value;
   const supplementId = document.getElementById('assignmentSupplementId').value;
   const timeSlot = document.getElementById('assignmentTimeSlot').value.trim();
-  const frequency = document.getElementById('assignmentFrequency').value.trim();
   const notes = document.getElementById('assignmentNotes').value.trim();
+  const days = getSelectedDays('daysCheckboxes');
   if (!supplementId || !timeSlot) { showToast('Supplement and Time required', 'error'); return; }
   let newId = id;
   let isNew = false;
   if (!newId) { newId = generateSupplementAssignmentId(); isNew = true; }
-  const newAssign = { assignmentId: newId, supplementId, timeSlot, frequency, notes };
+  const newAssign = { assignmentId: newId, supplementId, timeSlot, days, notes };
   if (isNew) supplementAssignments.push(newAssign);
   else { const idx = supplementAssignments.findIndex(a => a.assignmentId === newId); if (idx !== -1) supplementAssignments[idx] = newAssign; }
   closeAssignmentModal();
@@ -593,7 +658,7 @@ async function saveAssignmentsToSheet() {
   try {
     await gapi.client.sheets.spreadsheets.values.clear({ spreadsheetId, range: `'${SUPPLEMENT_ROUTINE_SHEET}'!A2:E` });
     if (supplementAssignments.length) {
-      const rows = supplementAssignments.map(a => [a.assignmentId, a.supplementId, a.timeSlot, a.frequency, a.notes]);
+      const rows = supplementAssignments.map(a => [a.assignmentId, a.supplementId, a.timeSlot, a.days, a.notes]);
       await gapi.client.sheets.spreadsheets.values.update({ spreadsheetId, range: `'${SUPPLEMENT_ROUTINE_SHEET}'!A2`, valueInputOption: 'RAW', resource: { values: rows } });
     }
     saveAssignmentsLocal();
@@ -619,13 +684,14 @@ async function syncAll() {
   try { await loadSupplements(); await loadAssignments(); await loadLogs(); renderSupplementsCard(); renderRoutineTab(); renderLogTab(); showToast('✅ Synced'); }
   catch(e) { showToast('❌ Sync failed', 'error'); } finally { btn.classList.remove('spinning'); }
 }
+
 async function ensureSheets() {
   try {
     const meta = await gapi.client.sheets.spreadsheets.get({ spreadsheetId });
     const existing = meta.result.sheets.map(s => s.properties.title);
     const required = [
       { name: SUPPLEMENTS_SHEET, headers: ['SupplementID','Name','Use For','Status'] },
-      { name: SUPPLEMENT_ROUTINE_SHEET, headers: ['AssignmentID','SupplementID','TimeSlot','Frequency','Notes'] },
+      { name: SUPPLEMENT_ROUTINE_SHEET, headers: ['AssignmentID','SupplementID','TimeSlot','Days','Notes'] },
       { name: SUPPLEMENTS_LOG_SHEET, headers: ['Date','TimeSlot','Supplement','Taken','Notes','Timestamp','SupplementID'] }
     ];
     for (const sheet of required) {
@@ -633,10 +699,24 @@ async function ensureSheets() {
         await gapi.client.sheets.spreadsheets.batchUpdate({ spreadsheetId, resource: { requests: [{ addSheet: { properties: { title: sheet.name } } }] } });
         const range = `${sheet.name}!A1:${String.fromCharCode(64 + sheet.headers.length)}1`;
         await gapi.client.sheets.spreadsheets.values.update({ spreadsheetId, range, valueInputOption: 'RAW', resource: { values: [sheet.headers] } });
+      } else if (sheet.name === SUPPLEMENT_ROUTINE_SHEET) {
+        // Migrate if Days column missing (old sheets)
+        const headerRes = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId, range: `${SUPPLEMENT_ROUTINE_SHEET}!A1:E1` });
+        const headers = headerRes.result.values?.[0] || [];
+        if (headers.length < 4) {
+          // Add missing columns
+          if (!headers.includes('Days')) {
+            await gapi.client.sheets.spreadsheets.values.update({ spreadsheetId, range: `${SUPPLEMENT_ROUTINE_SHEET}!D1`, valueInputOption: 'RAW', resource: { values: [['Days']] } });
+          }
+          if (!headers.includes('Notes')) {
+            await gapi.client.sheets.spreadsheets.values.update({ spreadsheetId, range: `${SUPPLEMENT_ROUTINE_SHEET}!E1`, valueInputOption: 'RAW', resource: { values: [['Notes']] } });
+          }
+        }
       }
     }
   } catch(e) { console.warn('ensureSheets error', e); }
 }
+
 async function initPage() {
   const timeoutId = setTimeout(() => { const ov = document.getElementById('loadingOverlay'); if (ov && ov.style.display !== 'none') { ov.style.display = 'none'; showToast('⚠️ Connection slow. Please refresh.', 'error'); } }, 8000);
   try {
@@ -646,6 +726,7 @@ async function initPage() {
     });
   } catch(err) { console.error(err); clearTimeout(timeoutId); document.getElementById('loadingOverlay').style.display = 'none'; showToast('❌ Failed to load. Please sign in again.', 'error'); setTimeout(() => window.location.href = 'Home.html', 2000); }
 }
+
 document.getElementById('actionSheet').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeActionSheet(); });
 document.getElementById('supplementModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeSupplementModal(); });
 document.getElementById('assignmentModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeAssignmentModal(); });
