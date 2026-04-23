@@ -1153,6 +1153,15 @@ input[list="timeOptions"] {
 }
 
 /* Force 2‑column grid for Use For checkboxes – tighter spacing */
+#useForCheckboxes {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 6px 12px !important;
+  align-items: start !important;
+  margin-top: 8px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
 #useForCheckboxes label {
   text-transform: none !important;
   font-weight: 600 !important;
