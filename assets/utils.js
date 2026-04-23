@@ -270,3 +270,29 @@ function unselectAllDays(containerId) {
     container.querySelectorAll('input').forEach(cb => cb.checked = false);
   }
 }
+
+// ======================== USE FOR CHECKBOXES HELPER ========================
+/**
+ * Render use‑for checkboxes inside a container.
+ * @param {string} containerId - ID of the container.
+ * @param {Array} optionsArray - Array of option strings.
+ * @param {string} selectedStr - Comma-separated string of selected options.
+ */
+function renderUseForCheckboxesGeneric(containerId, optionsArray, selectedStr = '') {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const selectedSet = new Set(selectedStr.split(',').map(s => s.trim()).filter(Boolean));
+  container.innerHTML = optionsArray.map(option => {
+    const checked = selectedSet.has(option) ? 'checked' : '';
+    return `<label style="display:flex; align-items:center; gap:8px; margin:0; padding:2px 0; font-size:12px; cursor:pointer;">
+      <input type="checkbox" value="${escapeHtml(option)}" ${checked} style="margin:0; width:16px; height:16px; flex-shrink:0;">
+      <span>${escapeHtml(option)}</span>
+    </label>`;
+  }).join('');
+}
+
+function getSelectedUseForGeneric(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return '';
+  return Array.from(container.querySelectorAll('input:checked')).map(cb => cb.value).join(',');
+}
