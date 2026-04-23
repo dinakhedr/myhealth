@@ -307,14 +307,16 @@ function renderAssignmentsList(){
     if(!arr.length){ container.innerHTML='<div class="empty-state-small">No assignments</div>'; return; }
     container.innerHTML = arr.map(a=>{ 
       const p=productMap.get(a.productId);
-      const daysDisplay = a.days ? a.days.replace(/,/g, ', ') : '';
+      const daysArray = a.days ? a.days.split(',') : [];
+      const isAllDays = daysArray.length === 7 && WEEKDAYS.every(day => daysArray.includes(day));
+      const daysDisplay = isAllDays ? 'Daily' : (a.days ? a.days.replace(/,/g, ', ') : '');
       return `<div class="assignment-item-new" data-id="${a.assignmentId}">
         <div class="drag-handle">☰</div>
         <div class="step-badge">${a.step}</div>
         <div class="assignment-details">
           <div class="assignment-product">${escapeHtml(p.product)}</div>
           <div class="assignment-brand">${escapeHtml(getBrandNameFromId(p.brandId))}</div>
-          <div class="assignment-days">${escapeHtml(daysDisplay)}</div>
+          <div class="assignment-days">📅 ${escapeHtml(daysDisplay)}</div>
         </div>
         <button class="more-btn" onclick="openActionSheet('assignment','${a.assignmentId}')">⋮</button>
       </div>`;
