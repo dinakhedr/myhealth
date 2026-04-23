@@ -39,12 +39,12 @@
   </div>
 
   <!-- tabs inside a card (Installments style) -->
-  <div class="card">
+  <div class="card" style="padding: 0; overflow: hidden;">
     <div class="tab-bar">
       <button class="tab-btn active" onclick="switchTab('log')">📋 Today's Routine</button>
       <button class="tab-btn" onclick="switchTab('assignments')">📌 My Routine</button>
     </div>
-    
+
     <div id="logTab" class="tab-content active">
       <div class="completed-toggle">
         <label for="hideCompletedCheckbox">Hide completed steps</label>
@@ -157,6 +157,63 @@
   </div>
 </div>
 
+<style>
+  /* additional style for step number badge */
+  .step-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    background: var(--brand-grad);
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    border-radius: 10px;
+    padding: 0 8px;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+  .assignment-item-new {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .assignment-item-new .drag-handle {
+    margin-top: 4px;
+  }
+  .assignment-details {
+    flex: 1;
+  }
+  .assignment-product {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .assignment-brand {
+    font-size: 11px;
+    color: var(--brand);
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .assignment-days {
+    font-size: 10px;
+    color: var(--text-3);
+  }
+  .more-btn {
+    align-self: center;
+  }
+  /* Today's routine: remove step number from product name */
+  .step-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text);
+  }
+</style>
+
 <script>
 // ======================== STATE ============================
 let spreadsheetId = null, currentUserEmail = null, currentDate = new Date();
@@ -212,7 +269,8 @@ function renderLogTab() {
     for(const a of display){
       const p = productMap.get(a.productId); if(!p) continue;
       const isCompleted = todaysLogMap.has(`${a.phase}|${a.step}`);
-      html+=`<div class="step-item"><div class="step-check ${isCompleted?'completed':''}" onclick="toggleLog('${a.productId}','${a.phase}',${a.step},'${escapeHtml(p.product)}')">${isCompleted?'✓':''}</div><div class="step-info"><div class="step-name">${a.step}. ${escapeHtml(p.product)}</div>
+      // removed step number from product name
+      html+=`<div class="step-item"><div class="step-check ${isCompleted?'completed':''}" onclick="toggleLog('${a.productId}','${a.phase}',${a.step},'${escapeHtml(p.product)}')">${isCompleted?'✓':''}</div><div class="step-info"><div class="step-name">${escapeHtml(p.product)}</div>
       <div class="step-desc"><span class="step-brand">${escapeHtml(getBrandNameFromId(p.brandId))}</span></div></div></div>`;
     }
     html+=`</div>`;
@@ -247,7 +305,20 @@ function renderAssignmentsList(){
   const evening = valid.filter(a=>a.phase==='Evening').sort((a,b)=>a.step-b.step);
   function renderList(arr, container){
     if(!arr.length){ container.innerHTML='<div class="empty-state-small">No assignments</div>'; return; }
-    container.innerHTML = arr.map(a=>{ const p=productMap.get(a.productId); return `<div class="assignment-item" data-id="${a.assignmentId}"><div class="drag-handle">☰</div><div class="assignment-info"><div class="assignment-name">${escapeHtml(p.product)}</div><div class="assignment-brand step-brand">${escapeHtml(getBrandNameFromId(p.brandId))}</div><div class="assignment-phase-step">Step ${a.step}</div></div><button class="more-btn" onclick="openActionSheet('assignment','${a.assignmentId}')">⋮</button></div>`; }).join('');
+    container.innerHTML = arr.map(a=>{ 
+      const p=productMap.get(a.productId);
+      const daysDisplay = a.days ? a.days.replace(/,/g, ', ') : '';
+      return `<div class="assignment-item-new" data-id="${a.assignmentId}">
+        <div class="drag-handle">☰</div>
+        <div class="step-badge">${a.step}</div>
+        <div class="assignment-details">
+          <div class="assignment-product">${escapeHtml(p.product)}</div>
+          <div class="assignment-brand">${escapeHtml(getBrandNameFromId(p.brandId))}</div>
+          <div class="assignment-days">📅 ${escapeHtml(daysDisplay)}</div>
+        </div>
+        <button class="more-btn" onclick="openActionSheet('assignment','${a.assignmentId}')">⋮</button>
+      </div>`;
+    }).join('');
   }
   renderList(morning, document.getElementById('morningList'));
   renderList(evening, document.getElementById('eveningList'));
@@ -256,8 +327,8 @@ function renderAssignmentsList(){
   sortableEvening = new Sortable(document.getElementById('eveningList'), { group:{name:'routine', pull:true, revertClone:false, put:true}, animation:200, handle:'.drag-handle', onEnd:handleReorder });
 }
 async function handleReorder(){
-  const morningIds = Array.from(document.querySelectorAll('#morningList .assignment-item')).map(el=>el.dataset.id);
-  const eveningIds = Array.from(document.querySelectorAll('#eveningList .assignment-item')).map(el=>el.dataset.id);
+  const morningIds = Array.from(document.querySelectorAll('#morningList .assignment-item-new')).map(el=>el.dataset.id);
+  const eveningIds = Array.from(document.querySelectorAll('#eveningList .assignment-item-new')).map(el=>el.dataset.id);
   let newAssignments = [];
   morningIds.forEach((id,idx)=>{ const ex=assignments.find(a=>a.assignmentId===id); if(ex) newAssignments.push({...ex, phase:'Morning', step:idx+1}); });
   eveningIds.forEach((id,idx)=>{ const ex=assignments.find(a=>a.assignmentId===id); if(ex) newAssignments.push({...ex, phase:'Evening', step:idx+1}); });
