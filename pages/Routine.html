@@ -38,6 +38,8 @@
     <button class="hdr-icon-btn" onclick="changeDate(1)">→</button>
   </div>
 
+  /* Tabs */
+  <div class="card" style="padding: 0; overflow: hidden;">
   <div class="tab-bar">
     <button class="tab-btn active" onclick="switchTab('log')">📋 Today's Routine</button>
     <button class="tab-btn" onclick="switchTab('assignments')">📌 My Routine</button>
@@ -65,7 +67,7 @@
       <div id="eveningList" class="assignment-list"></div>
     </div>
   </div>
-
+ </div>
   <!-- All Products Card (bottom) -->
   <div class="products-management-card">
     <div class="card-header-flex">
@@ -128,10 +130,10 @@
     <div class="form-group">
       <label>📅 Days</label>
       <div id="daysCheckboxes" style="display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; margin-top:6px;"></div>
-      <div style="display:flex; gap:12px; margin-top:8px;">
-        <button type="button" class="btn-cancel" style="flex:0; padding:6px 12px;" onclick="selectAllDays()">Select All</button>
-        <button type="button" class="btn-cancel" style="flex:0; padding:6px 12px;" onclick="unselectAllDays()">Unselect All</button>
-      </div>
+<div style="display:flex; gap:12px; margin-top:8px; flex-wrap:wrap;">
+  <button type="button" class="btn-cancel" style="flex:0; padding:6px 12px; white-space:nowrap;" onclick="selectAllDays()">Select All</button>
+  <button type="button" class="btn-cancel" style="flex:0; padding:6px 12px; white-space:nowrap;" onclick="unselectAllDays()">Unselect All</button>
+</div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeAssignmentModal()">Cancel</button>
