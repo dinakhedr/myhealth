@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Supplements · Health Tracker</title>
+  <link rel="manifest" href="../manifest.json">
+  <link rel="apple-touch-icon" sizes="180x180" href="../images/icon.png">
+  <link rel="icon" type="image/png" sizes="180x180" href="../images/icon.png">
+  <link rel="shortcut icon" href="../images/icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/styles.css">
+  <script src="../assets/config.js"></script>
+  <script src="../assets/utils.js"></script>
+  <script src="../assets/auth.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://apis.google.com/js/api.js"></script>
+</head>
+<body>
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-box"><div class="spinner"></div><p>Loading…</p></div>
+</div>
+
+<div class="container">
+  <div class="header">
+    <h1>💊 Supplements</h1>
+    <div class="header-actions">
+      <button class="hdr-icon-btn" id="syncBtn" onclick="syncAll()">↻</button>
+      <button class="hdr-icon-btn" onclick="logout()">⏻</button>
+    </div>
+  </div>
+
+  <div class="date-nav">
+    <button class="hdr-icon-btn" onclick="changeDate(-1)">←</button>
+    <h2 id="dateDisplay"></h2>
+    <button class="hdr-icon-btn" onclick="changeDate(1)">→</button>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('log')">📋 Today's Supplements</button>
+    <button class="tab-btn" onclick="switchTab('routine')">📌 Supplement Routine</button>
+  </div>
+
+  <!-- Tab 1: Today's Supplements (Log) -->
+  <div id="logTab" class="tab-content active">
+    <div id="supplementsLogContainer"></div>
+  </div>
+
+  <!-- Tab 2: Supplement Routine (Assignments grouped by time slot) -->
+  <div id="routineTab" class="tab-content" style="display:none">
+    <div class="add-btn-container">
+      <button class="add-btn" onclick="openAssignmentModal()">➕ Add Routine</button>
+    </div>
+    <div id="routineGroupsContainer"></div>
+  </div>
+
+  <!-- All Supplements Card (bottom) -->
+  <div class="products-management-card">
+    <div class="card-header-flex">
+      <h3 class="card-title-text">📦 All Supplements</h3>
+      <button class="add-product-card-btn" onclick="openSupplementModal()">➕ Add Supplement</button>
+    </div>
+    <div id="supplementsCardContainer"></div>
+  </div>
+</div>
+
+<div id="bottomNavMount"></div>
+<div class="toast" id="toast"></div>
+
+<!-- Supplement Modal (Master item) -->
+<div class="modal-backdrop" id="supplementModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modalTitle">➕ Add Supplement</div>
+    <input type="hidden" id="editSupplementId">
+    <div class="form-group">
+      <label>Supplement Name *</label>
+      <input type="text" id="suppName" placeholder="e.g. Vitamin D3">
+    </div>
+    <div class="form-group">
+      <label>Use For</label>
+      <input type="text" id="suppUseFor" placeholder="e.g. Bone health, immunity">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeSupplementModal()">Cancel</button>
+      <button class="btn-save" onclick="saveSupplement()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Assignment Modal (Routine item) -->
+<div class="modal-backdrop" id="assignmentModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="assignmentModalTitle">➕ Add Routine</div>
+    <input type="hidden" id="editAssignmentId">
+    <div class="form-group">
+      <label>Supplement *</label>
+      <select id="assignmentSupplementId"></select>
+    </div>
+    <div class="form-group">
+      <label>Time *</label>
+      <input type="text" id="assignmentTimeSlot" list="timeOptions" placeholder="e.g., 9:00 AM, 4:00 PM">
+      <datalist id="timeOptions">
+        <option>8:00 AM</option><option>9:00 AM</option><option>10:00 AM</option>
+        <option>12:00 PM</option><option>1:00 PM</option><option>2:00 PM</option>
+        <option>4:00 PM</option><option>6:00 PM</option><option>8:00 PM</option>
+        <option>10:00 PM</option><option>Bedtime</option>
+      </datalist>
+    </div>
+    <div class="form-group">
+      <label>Frequency</label>
+      <input type="text" id="assignmentFrequency" placeholder="e.g., Daily, Every other day">
+    </div>
+    <div class="form-group">
+      <label>Notes (optional)</label>
+      <textarea id="assignmentNotes" rows="2" placeholder="Dosage, brand, etc."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeAssignmentModal()">Cancel</button>
+      <button class="btn-save" onclick="saveAssignment()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Action Sheet for assignments -->
+<div class="sheet-backdrop" id="actionSheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="sheetTitle">Options</div>
+    <button class="sheet-action" id="sheetEditBtn" onclick="sheetEdit()">
+      <span class="sheet-action-icon">✏️</span>Edit
+    </button>
+    <button class="sheet-action danger" id="sheetDeleteBtn" onclick="sheetDelete()">
+      <span class="sheet-action-icon">🗑️</span>Delete
+    </button>
+  </div>
+</div>
+
+<script>
+// ======================== STATE ============================
+let spreadsheetId = null;
+let currentUserEmail = null;
+let currentDate = new Date();
+let supplements = [];            // Master list
+let supplementAssignments = [];  // Routine assignments
+let supplementLogs = [];         // Logs
+let actionSheetTarget = null;
+let activeTab = 'log';
+let sortableInstances = {};
+
+// ======================== HELPERS ===========================
+function formatDateForDisplay(d) {
+  return d.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+}
+function formatDateISO(d) { return d.toISOString().split('T')[0]; }
+
+function changeDate(delta) {
+  currentDate.setDate(currentDate.getDate() + delta);
+  renderDate();
+  loadLogs();
+  if (activeTab === 'log') renderLogTab();
+}
+
+function renderDate() {
+  document.getElementById('dateDisplay').innerText = formatDateForDisplay(currentDate);
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('logTab').style.display = tab === 'log' ? 'block' : 'none';
+  document.getElementById('routineTab').style.display = tab === 'routine' ? 'block' : 'none';
+  const btns = document.querySelectorAll('.tab-btn');
+  btns.forEach((btn, i) => btn.classList.toggle('active', (i === 0 && tab === 'log') || (i === 1 && tab === 'routine')));
+  if (tab === 'log') renderLogTab();
+  else renderRoutineTab();
+}
+
+  // Helper: convert time string like "9:00 AM" or "Bedtime" to a sortable number
+function getTimeValue(timeStr) {
+  if (!timeStr) return 9999;
+  const lower = timeStr.toLowerCase().trim();
+  // Handle special cases
+  if (lower === 'bedtime') return 23;
+  if (lower === 'morning') return 8;
+  if (lower === 'afternoon') return 13;
+  if (lower === 'evening') return 18;
+  // Parse "9:00 AM" / "4:30 PM"
+  const match = timeStr.match(/(\d+)(?::(\d+))?\s*(am|pm)/i);
+  if (match) {
+    let hour = parseInt(match[1], 10);
+    const minute = match[2] ? parseInt(match[2], 10) : 0;
+    const meridiem = match[3].toLowerCase();
+    if (meridiem === 'pm' && hour !== 12) hour += 12;
+    if (meridiem === 'am' && hour === 12) hour = 0;
+    return hour + minute / 60;
+  }
+  // Fallback: alphabetical
+  return 9999;
+}
+// ======================== DATA LOADING ========================
+async function loadSupplements() {
+  if (!spreadsheetId) return;
+  try {
+    const res = await gapi.client.sheets.spreadsheets.values.get({
+      spreadsheetId, range: `'${SUPPLEMENTS_SHEET}'!A2:D`
+    });
+    const rows = res.result.values || [];
+    supplements = rows.map(r => ({
+      supplementId: r[0] || '',
+      name: r[1] || '',
+      useFor: r[2] || '',
+      status: r[3] || 'Active'
+    })).filter(s => s.supplementId);
+    saveSupplementsLocal();
+  } catch (e) { console.error('loadSupplements', e); }
+}
+
+async function loadAssignments() {
+  if (!spreadsheetId) return;
+  try {
+    const res = await gapi.client.sheets.spreadsheets.values.get({
+      spreadsheetId, range: `'${SUPPLEMENT_ROUTINE_SHEET}'!A2:E`
+    });
+    const rows = res.result.values || [];
+    supplementAssignments = rows.map(r => ({
+      assignmentId: r[0] || '',
+      supplementId: r[1] || '',
+      timeSlot: r[2] || '',
+      frequency: r[3] || '',
+      notes: r[4] || ''
+    })).filter(a => a.assignmentId);
+    saveAssignmentsLocal();
+  } catch (e) { console.error('loadAssignments', e); }
+}
+
+async function loadLogs() {
+  if (!spreadsheetId) return;
+  try {
+    const res = await gapi.client.sheets.spreadsheets.values.get({
+      spreadsheetId, range: `'${SUPPLEMENTS_LOG_SHEET}'!A2:G`
+    });
+    const rows = res.result.values || [];
+    supplementLogs = rows.map(r => ({
+      date: r[0] || '',
+      timeSlot: r[1] || '',
+      supplement: r[2] || '',
+      taken: r[3] === 'TRUE',
+      notes: r[4] || '',
+      timestamp: r[5] || '',
+      supplementId: r[6] || ''
+    }));
+  } catch (e) { console.error('loadLogs', e); }
+}
+
+function saveSupplementsLocal() {
+  if (currentUserEmail) localStorage.setItem(`supplements_${currentUserEmail}`, JSON.stringify(supplements));
+}
+function loadSupplementsLocal() {
+  if (currentUserEmail) {
+    const s = localStorage.getItem(`supplements_${currentUserEmail}`);
+    if (s) supplements = JSON.parse(s);
+  }
+}
+function saveAssignmentsLocal() {
+  if (currentUserEmail) localStorage.setItem(`suppAssignments_${currentUserEmail}`, JSON.stringify(supplementAssignments));
+}
+function loadAssignmentsLocal() {
+  if (currentUserEmail) {
+    const a = localStorage.getItem(`suppAssignments_${currentUserEmail}`);
+    if (a) supplementAssignments = JSON.parse(a);
+  }
+}
+
+// ======================== RENDER LOG TAB =====================
+function renderLogTab() {
+  const container = document.getElementById('supplementsLogContainer');
+  const dateStr = formatDateISO(currentDate);
+  const todaysTaken = new Set(supplementLogs.filter(l => l.date === dateStr && l.taken).map(l => l.supplementId));
+  const supplementMap = new Map(supplements.map(s => [s.supplementId, s]));
+  const activeAssignments = supplementAssignments.filter(a => {
+    const supp = supplementMap.get(a.supplementId);
+    return supp && supp.status === 'Active';
+  });
+
+  if (activeAssignments.length === 0) {
+    container.innerHTML = '<div class="empty-state">No active supplement routine. Add one in "Supplement Routine".</div>';
+    return;
+  }
+
+  // Group by time slot
+  const grouped = {};
+  activeAssignments.forEach(a => { if (!grouped[a.timeSlot]) grouped[a.timeSlot] = []; grouped[a.timeSlot].push(a); });
+
+  let html = '';
+  for (const slot of Object.keys(grouped).sort((a, b) => getTimeValue(a) - getTimeValue(b))) {
+    html += `<div class="phase-section"><div class="phase-header">🕒 ${escapeHtml(slot)}</div>`;
+    for (const a of grouped[slot]) {
+      const supp = supplementMap.get(a.supplementId);
+      if (!supp) continue;
+      const isTaken = todaysTaken.has(a.supplementId);
+      html += `
+        <div class="step-item">
+          <div class="step-check ${isTaken ? 'completed' : ''}" onclick="toggleLog('${a.supplementId}', '${escapeHtml(supp.name)}', '${escapeHtml(slot)}')">
+            ${isTaken ? '✓' : ''}
+          </div>
+          <div class="step-info">
+            <div class="step-name">${escapeHtml(supp.name)}</div>
+            <div class="step-desc">
+              <span class="freq-badge freq-daily">${escapeHtml(a.frequency || 'Daily')}</span>
+              ${a.notes ? `<span class="step-brand">${escapeHtml(a.notes)}</span>` : ''}
+            </div>
+          </div>
+        </div>`;
+    }
+    html += `</div>`;
+  }
+  container.innerHTML = html;
+}
+
+async function toggleLog(supplementId, supplementName, timeSlot) {
+  const dateStr = formatDateISO(currentDate);
+  const existing = supplementLogs.find(l => l.date === dateStr && l.supplementId === supplementId);
+  try {
+    if (!existing) {
+      const timestamp = new Date().toISOString();
+      await gapi.client.sheets.spreadsheets.values.append({
+        spreadsheetId, range: `'${SUPPLEMENTS_LOG_SHEET}'!A2:G`,
+        valueInputOption: 'RAW',
+        resource: { values: [[dateStr, timeSlot, supplementName, 'TRUE', '', timestamp, supplementId]] }
+      });
+      showToast(`✅ ${supplementName} taken`);
+    } else {
+      const res = await gapi.client.sheets.spreadsheets.values.get({
+        spreadsheetId, range: `'${SUPPLEMENTS_LOG_SHEET}'!A2:G`
+      });
+      const rows = res.result.values || [];
+      const newRows = rows.filter(r => !(r[0] === dateStr && r[6] === supplementId));
+      await gapi.client.sheets.spreadsheets.values.clear({ spreadsheetId, range: `'${SUPPLEMENTS_LOG_SHEET}'!A2:G` });
+      if (newRows.length) {
+        await gapi.client.sheets.spreadsheets.values.update({
+          spreadsheetId, range: `'${SUPPLEMENTS_LOG_SHEET}'!A2`, valueInputOption: 'RAW', resource: { values: newRows }
+        });
+      }
+      showToast(`Marked ${supplementName} not taken`);
+    }
+    await loadLogs();
+    renderLogTab();
+  } catch (e) { console.error(e); showToast('❌ Failed', 'error'); }
+}
+
+// ======================== RENDER ROUTINE TAB (grouped by time slot) =====================
+function renderRoutineTab() {
+  const container = document.getElementById('routineGroupsContainer');
+  const supplementMap = new Map(supplements.map(s => [s.supplementId, s]));
+  const validAssignments = supplementAssignments.filter(a => supplementMap.has(a.supplementId));
+
+  // Group by time slot
+  const groups = {};
+  validAssignments.forEach(a => {
+    if (!groups[a.timeSlot]) groups[a.timeSlot] = [];
+    groups[a.timeSlot].push(a);
+  });
+
+  if (Object.keys(groups).length === 0) {
+    container.innerHTML = '<div class="empty-state">No supplement routine yet. Tap + to add.</div>';
+    return;
+  }
+
+  let html = '';
+  for (const slot of Object.keys(groups).sort((a, b) => getTimeValue(a) - getTimeValue(b))) {
+    html += `<div class="assignment-phase-container">`;
+    html += `<div class="assignment-phase-title phase-header-style">🕒 ${escapeHtml(slot)}</div>`;
+    html += `<div class="assignment-list" data-slot="${escapeHtml(slot)}">`;
+    for (const a of groups[slot]) {
+      const supp = supplementMap.get(a.supplementId);
+      if (!supp) continue;
+      html += `
+        <div class="assignment-item" data-id="${a.assignmentId}">
+          <div class="drag-handle">☰</div>
+          <div class="assignment-info">
+            <div class="assignment-name">${escapeHtml(supp.name)}</div>
+            <div class="assignment-brand">${escapeHtml(a.frequency || 'Daily')}</div>
+            <div class="assignment-phase-step">${escapeHtml(a.notes || '')}</div>
+          </div>
+          <button class="more-btn" onclick="openActionSheet('${a.assignmentId}')">⋮</button>
+        </div>`;
+    }
+    html += `</div></div>`;
+  }
+  container.innerHTML = html;
+  initSortable();
+}
+
+function initSortable() {
+  Object.values(sortableInstances).forEach(s => s.destroy());
+  sortableInstances = {};
+  document.querySelectorAll('.assignment-list').forEach(list => {
+    const slot = list.dataset.slot;
+    sortableInstances[slot] = new Sortable(list, {
+      group: { name: 'suppRoutine', pull: true, revertClone: false, put: true },
+      animation: 200,
+      handle: '.drag-handle',
+      onEnd: handleReorder
+    });
+  });
+}
+
+async function handleReorder() {
+  const newAssignments = [];
+  document.querySelectorAll('.assignment-list').forEach(list => {
+    const newSlot = list.dataset.slot;
+    Array.from(list.querySelectorAll('.assignment-item')).forEach((el, idx) => {
+      const id = el.dataset.id;
+      const existing = supplementAssignments.find(a => a.assignmentId === id);
+      if (existing) {
+        newAssignments.push({ ...existing, timeSlot: newSlot });
+      }
+    });
+  });
+  let changed = newAssignments.length !== supplementAssignments.length;
+  if (!changed) {
+    for (let i = 0; i < newAssignments.length; i++) {
+      const old = supplementAssignments.find(a => a.assignmentId === newAssignments[i].assignmentId);
+      if (!old || old.timeSlot !== newAssignments[i].timeSlot) { changed = true; break; }
+    }
+  }
+  if (!changed) return;
+  supplementAssignments = newAssignments;
+  saveAssignmentsLocal();
+  await saveAssignmentsToSheet();
+  showToast('✅ Routine order updated');
+  renderRoutineTab();
+  if (activeTab === 'log') renderLogTab();
+}
+
+// ======================== ALL SUPPLEMENTS CARD =====================
+function renderSupplementsCard() {
+  const container = document.getElementById('supplementsCardContainer');
+  if (!supplements.length) {
+    container.innerHTML = '<div class="empty-state">✨ No supplements yet. Tap "Add Supplement" to start.</div>';
+    return;
+  }
+  const sorted = [...supplements].sort((a,b) => a.name.localeCompare(b.name));
+  let html = '';
+  for (const s of sorted) {
+    const statusClass = s.status === 'Active' ? 'active' : 'inactive';
+    html += `
+      <div class="supplement-list-item">
+        <div class="supplement-info">
+          <div class="supplement-name">${escapeHtml(s.name)}</div>
+          <div class="supplement-meta">${escapeHtml(s.useFor || '')}</div>
+        </div>
+        <div class="status-toggle ${statusClass}" onclick="toggleSupplementStatus('${s.supplementId}', event)">
+          <div class="status-toggle-knob"></div>
+        </div>
+        <button class="more-btn" onclick="openSupplementModal('${s.supplementId}'); event.stopPropagation();">✏️</button>
+        <button class="more-btn" style="color:var(--danger);" onclick="deleteSupplement('${s.supplementId}'); event.stopPropagation();">🗑️</button>
+      </div>`;
+  }
+  container.innerHTML = html;
+}
+
+async function toggleSupplementStatus(supplementId, event) {
+  event.stopPropagation();
+  const supp = supplements.find(s => s.supplementId === supplementId);
+  if (!supp) return;
+  supp.status = supp.status === 'Active' ? 'Inactive' : 'Active';
+  await saveSupplementsToSheet();
+  renderSupplementsCard();
+  renderRoutineTab();
+  if (activeTab === 'log') renderLogTab();
+  showToast(`Supplement ${supp.status.toLowerCase()}`);
+}
+
+function openSupplementModal(supplementId = null) {
+  const isEdit = !!supplementId;
+  document.getElementById('modalTitle').innerText = isEdit ? '✏️ Edit Supplement' : '➕ Add Supplement';
+  document.getElementById('editSupplementId').value = supplementId || '';
+  if (isEdit) {
+    const supp = supplements.find(s => s.supplementId === supplementId);
+    if (supp) {
+      document.getElementById('suppName').value = supp.name;
+      document.getElementById('suppUseFor').value = supp.useFor;
+    }
+  } else {
+    document.getElementById('suppName').value = '';
+    document.getElementById('suppUseFor').value = '';
+  }
+  document.getElementById('supplementModal').classList.add('open');
+}
+
+function closeSupplementModal() {
+  document.getElementById('supplementModal').classList.remove('open');
+}
+
+async function saveSupplement() {
+  const id = document.getElementById('editSupplementId').value;
+  const name = document.getElementById('suppName').value.trim();
+  const useFor = document.getElementById('suppUseFor').value.trim();
+  if (!name) { showToast('Supplement name required', 'error'); return; }
+  let newId = id;
+  let isNew = false;
+  if (!newId) { newId = generateSupplementId(); isNew = true; }
+  const newSupp = { supplementId: newId, name, useFor, status: 'Active' };
+  if (isNew) supplements.push(newSupp);
+  else { const idx = supplements.findIndex(s => s.supplementId === newId); if (idx !== -1) supplements[idx] = newSupp; }
+  closeSupplementModal();
+  await saveSupplementsToSheet();
+  renderSupplementsCard();
+  renderRoutineTab();
+  if (activeTab === 'log') renderLogTab();
+  showToast(isNew ? '✅ Supplement added' : '✅ Updated');
+}
+
+async function deleteSupplement(supplementId) {
+  if (!confirm('Delete this supplement? It will also remove its routine assignments.')) return;
+  supplementAssignments = supplementAssignments.filter(a => a.supplementId !== supplementId);
+  supplements = supplements.filter(s => s.supplementId !== supplementId);
+  await saveSupplementsToSheet();
+  await saveAssignmentsToSheet();
+  renderSupplementsCard();
+  renderRoutineTab();
+  if (activeTab === 'log') renderLogTab();
+  showToast('🗑️ Supplement deleted');
+}
+
+async function saveSupplementsToSheet() {
+  if (!spreadsheetId) return false;
+  try {
+    await gapi.client.sheets.spreadsheets.values.clear({ spreadsheetId, range: `'${SUPPLEMENTS_SHEET}'!A2:D` });
+    if (supplements.length) {
+      const rows = supplements.map(s => [s.supplementId, s.name, s.useFor, s.status]);
+      await gapi.client.sheets.spreadsheets.values.update({ spreadsheetId, range: `'${SUPPLEMENTS_SHEET}'!A2`, valueInputOption: 'RAW', resource: { values: rows } });
+    }
+    saveSupplementsLocal();
+    return true;
+  } catch (e) { console.error(e); return false; }
+}
+
+// ======================== ASSIGNMENT CRUD =====================
+function openAssignmentModal(assignmentId = null) {
+  const isEdit = !!assignmentId;
+  document.getElementById('assignmentModalTitle').innerText = isEdit ? '✏️ Edit Routine' : '➕ Add Routine';
+  document.getElementById('editAssignmentId').value = assignmentId || '';
+  const select = document.getElementById('assignmentSupplementId');
+  const activeSupps = supplements.filter(s => s.status === 'Active');
+  select.innerHTML = activeSupps.map(s => `<option value="${s.supplementId}">${escapeHtml(s.name)}</option>`).join('');
+  if (isEdit) {
+    const a = supplementAssignments.find(a => a.assignmentId === assignmentId);
+    if (a) {
+      document.getElementById('assignmentSupplementId').value = a.supplementId;
+      document.getElementById('assignmentTimeSlot').value = a.timeSlot;
+      document.getElementById('assignmentFrequency').value = a.frequency;
+      document.getElementById('assignmentNotes').value = a.notes;
+    }
+  } else {
+    document.getElementById('assignmentTimeSlot').value = '';
+    document.getElementById('assignmentFrequency').value = 'Daily';
+    document.getElementById('assignmentNotes').value = '';
+  }
+  document.getElementById('assignmentModal').classList.add('open');
+}
+
+function closeAssignmentModal() {
+  document.getElementById('assignmentModal').classList.remove('open');
+}
+
+async function saveAssignment() {
+  const id = document.getElementById('editAssignmentId').value;
+  const supplementId = document.getElementById('assignmentSupplementId').value;
+  const timeSlot = document.getElementById('assignmentTimeSlot').value.trim();
+  const frequency = document.getElementById('assignmentFrequency').value.trim();
+  const notes = document.getElementById('assignmentNotes').value.trim();
+  if (!supplementId || !timeSlot) { showToast('Supplement and Time required', 'error'); return; }
+  let newId = id;
+  let isNew = false;
+  if (!newId) { newId = generateSupplementAssignmentId(); isNew = true; }
+  const newAssign = { assignmentId: newId, supplementId, timeSlot, frequency, notes };
+  if (isNew) supplementAssignments.push(newAssign);
+  else { const idx = supplementAssignments.findIndex(a => a.assignmentId === newId); if (idx !== -1) supplementAssignments[idx] = newAssign; }
+  closeAssignmentModal();
+  await saveAssignmentsToSheet();
+  renderRoutineTab();
+  if (activeTab === 'log') renderLogTab();
+  showToast(isNew ? '✅ Routine added' : '✅ Updated');
+}
+
+async function saveAssignmentsToSheet() {
+  if (!spreadsheetId) return false;
+  try {
+    await gapi.client.sheets.spreadsheets.values.clear({ spreadsheetId, range: `'${SUPPLEMENT_ROUTINE_SHEET}'!A2:E` });
+    if (supplementAssignments.length) {
+      const rows = supplementAssignments.map(a => [a.assignmentId, a.supplementId, a.timeSlot, a.frequency, a.notes]);
+      await gapi.client.sheets.spreadsheets.values.update({ spreadsheetId, range: `'${SUPPLEMENT_ROUTINE_SHEET}'!A2`, valueInputOption: 'RAW', resource: { values: rows } });
+    }
+    saveAssignmentsLocal();
+    return true;
+  } catch (e) { console.error(e); return false; }
+}
+
+// ======================== ACTION SHEET =====================
+function openActionSheet(assignmentId) {
+  actionSheetTarget = assignmentId;
+  const a = supplementAssignments.find(a => a.assignmentId === assignmentId);
+  const supp = supplements.find(s => s.supplementId === a?.supplementId);
+  document.getElementById('sheetTitle').textContent = supp ? supp.name : 'Assignment';
+  document.getElementById('actionSheet').classList.add('open');
+}
+function closeActionSheet() { document.getElementById('actionSheet').classList.remove('open'); actionSheetTarget = null; }
+function sheetEdit() { if (!actionSheetTarget) return; const id = actionSheetTarget; closeActionSheet(); openAssignmentModal(id); }
+async function sheetDelete() { if (!actionSheetTarget) return; const id = actionSheetTarget; closeActionSheet(); supplementAssignments = supplementAssignments.filter(a => a.assignmentId !== id); await saveAssignmentsToSheet(); renderRoutineTab(); if (activeTab === 'log') renderLogTab(); showToast('🗑️ Routine deleted'); }
+
+// ======================== SYNC & INIT ========================
+async function syncAll() {
+  const btn = document.getElementById('syncBtn'); btn.classList.add('spinning');
+  try { await loadSupplements(); await loadAssignments(); await loadLogs(); renderSupplementsCard(); renderRoutineTab(); renderLogTab(); showToast('✅ Synced'); }
+  catch(e) { showToast('❌ Sync failed', 'error'); } finally { btn.classList.remove('spinning'); }
+}
+async function ensureSheets() {
+  try {
+    const meta = await gapi.client.sheets.spreadsheets.get({ spreadsheetId });
+    const existing = meta.result.sheets.map(s => s.properties.title);
+    const required = [
+      { name: SUPPLEMENTS_SHEET, headers: ['SupplementID','Name','Use For','Status'] },
+      { name: SUPPLEMENT_ROUTINE_SHEET, headers: ['AssignmentID','SupplementID','TimeSlot','Frequency','Notes'] },
+      { name: SUPPLEMENTS_LOG_SHEET, headers: ['Date','TimeSlot','Supplement','Taken','Notes','Timestamp','SupplementID'] }
+    ];
+    for (const sheet of required) {
+      if (!existing.includes(sheet.name)) {
+        await gapi.client.sheets.spreadsheets.batchUpdate({ spreadsheetId, resource: { requests: [{ addSheet: { properties: { title: sheet.name } } }] } });
+        const range = `${sheet.name}!A1:${String.fromCharCode(64 + sheet.headers.length)}1`;
+        await gapi.client.sheets.spreadsheets.values.update({ spreadsheetId, range, valueInputOption: 'RAW', resource: { values: [sheet.headers] } });
+      }
+    }
+  } catch(e) { console.warn('ensureSheets error', e); }
+}
+async function initPage() {
+  const timeoutId = setTimeout(() => { const ov = document.getElementById('loadingOverlay'); if (ov && ov.style.display !== 'none') { ov.style.display = 'none'; showToast('⚠️ Connection slow. Please refresh.', 'error'); } }, 8000);
+  try {
+    await initPageAuth({
+      onLoadLocal: (email, sheetId) => { currentUserEmail = email; spreadsheetId = sheetId; loadSupplementsLocal(); loadAssignmentsLocal(); renderDate(); },
+      onReady: async (sheetId, email, token) => { clearTimeout(timeoutId); spreadsheetId = sheetId; currentUserEmail = email; await ensureUserSettingsSheet(spreadsheetId); await ensureSheets(); await loadSupplements(); await loadAssignments(); await loadLogs(); renderDate(); renderSupplementsCard(); renderRoutineTab(); renderLogTab(); document.getElementById('loadingOverlay').style.display = 'none'; }
+    });
+  } catch(err) { console.error(err); clearTimeout(timeoutId); document.getElementById('loadingOverlay').style.display = 'none'; showToast('❌ Failed to load. Please sign in again.', 'error'); setTimeout(() => window.location.href = 'Home.html', 2000); }
+}
+document.getElementById('actionSheet').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeActionSheet(); });
+document.getElementById('supplementModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeSupplementModal(); });
+document.getElementById('assignmentModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeAssignmentModal(); });
+renderBottomNav('supplements');
+initPage();
+</script>
+</body>
+</html>
