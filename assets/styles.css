@@ -1153,24 +1153,38 @@ input[list="timeOptions"] {
 }
 
 /* Force 2‑column grid for Use For checkboxes – tighter spacing */
+/* Use For checkboxes – compact grid */
 #useForCheckboxes {
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
-  gap: 6px 12px !important;
-  align-items: start !important;
+  gap: 6px 12px !important;        /* vertical 6px, horizontal 12px */
   margin-top: 8px !important;
   width: 100% !important;
   box-sizing: border-box !important;
 }
+
+/* Each checkbox label – remove any default spacing */
 #useForCheckboxes label {
-  text-transform: none !important;
-  font-weight: 600 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;              /* space between checkbox and text */
+  margin: 0 !important;
+  padding: 0 !important;
   font-size: 12px !important;
+  font-weight: 500 !important;
+  text-transform: none !important;
   letter-spacing: normal !important;
   color: var(--text) !important;
-  margin: 0 !important;
-  padding: 2px 0 !important;
   line-height: 1.3 !important;
+  cursor: pointer !important;
+}
+
+/* Checkbox input – remove default margins */
+#useForCheckboxes input[type="checkbox"] {
+  margin: 0 !important;
+  width: 16px !important;
+  height: 16px !important;
+  flex-shrink: 0 !important;
 }
 
 /* Ensure modal content uses proper spacing and scroll */
