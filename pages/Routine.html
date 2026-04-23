@@ -314,7 +314,7 @@ function renderAssignmentsList(){
         <div class="assignment-details">
           <div class="assignment-product">${escapeHtml(p.product)}</div>
           <div class="assignment-brand">${escapeHtml(getBrandNameFromId(p.brandId))}</div>
-          <div class="assignment-days">📅 ${escapeHtml(daysDisplay)}</div>
+          <div class="assignment-days">${escapeHtml(daysDisplay)}</div>
         </div>
         <button class="more-btn" onclick="openActionSheet('assignment','${a.assignmentId}')">⋮</button>
       </div>`;
