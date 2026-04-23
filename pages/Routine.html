@@ -39,7 +39,7 @@
   </div>
 
   <!-- tabs inside a card (Installments style) -->
-  <div class="card" style="padding: 0; overflow: hidden;">
+  <div class="card">
     <div class="tab-bar">
       <button class="tab-btn active" onclick="switchTab('log')">📋 Today's Routine</button>
       <button class="tab-btn" onclick="switchTab('assignments')">📌 My Routine</button>
@@ -316,7 +316,7 @@ function renderAssignmentsList(){
         <div class="assignment-details">
           <div class="assignment-product">${escapeHtml(p.product)}</div>
           <div class="assignment-brand">${escapeHtml(getBrandNameFromId(p.brandId))}</div>
-          <div class="assignment-days">📅 ${escapeHtml(daysDisplay)}</div>
+          <div class="assignment-days">${escapeHtml(daysDisplay)}</div>
         </div>
         <button class="more-btn" onclick="openActionSheet('assignment','${a.assignmentId}')">⋮</button>
       </div>`;
