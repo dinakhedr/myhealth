@@ -38,36 +38,37 @@
     <button class="hdr-icon-btn" onclick="changeDate(1)">→</button>
   </div>
 
-  <!-- tabs -->
+  <!-- tabs inside a card (Installments style) -->
   <div class="card" style="padding: 0; overflow: hidden;">
-  <div class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('log')">📋 Today's Routine</button>
-    <button class="tab-btn" onclick="switchTab('assignments')">📌 My Routine</button>
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('log')">📋 Today's Routine</button>
+      <button class="tab-btn" onclick="switchTab('assignments')">📌 My Routine</button>
+    </div>
+
+    <div id="logTab" class="tab-content active">
+      <div class="completed-toggle">
+        <label for="hideCompletedCheckbox">Hide completed steps</label>
+        <input type="checkbox" id="hideCompletedCheckbox" onchange="renderLogTab()">
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <div id="routineContainer"></div>
+    </div>
+
+    <div id="assignmentsTab" class="tab-content" style="display:none">
+      <div class="add-btn-container">
+        <button class="add-btn" onclick="openAssignmentModal()">➕ Add Routine</button>
+      </div>
+      <div id="morningAssignments" class="assignment-phase-container">
+        <div class="assignment-phase-title phase-header-style">🌅 Morning</div>
+        <div id="morningList" class="assignment-list"></div>
+      </div>
+      <div id="eveningAssignments" class="assignment-phase-container">
+        <div class="assignment-phase-title phase-header-style">🌙 Evening</div>
+        <div id="eveningList" class="assignment-list"></div>
+      </div>
+    </div>
   </div>
 
-  <div id="logTab" class="tab-content active">
-    <div class="completed-toggle">
-      <label for="hideCompletedCheckbox">Hide completed steps</label>
-      <input type="checkbox" id="hideCompletedCheckbox" onchange="renderLogTab()">
-    </div>
-    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-    <div id="routineContainer"></div>
-  </div>
-
-  <div id="assignmentsTab" class="tab-content" style="display:none">
-    <div class="add-btn-container">
-      <button class="add-btn" onclick="openAssignmentModal()">➕ Add Routine</button>
-    </div>
-    <div id="morningAssignments" class="assignment-phase-container">
-      <div class="assignment-phase-title phase-header-style">🌅 Morning</div>
-      <div id="morningList" class="assignment-list"></div>
-    </div>
-    <div id="eveningAssignments" class="assignment-phase-container">
-      <div class="assignment-phase-title phase-header-style">🌙 Evening</div>
-      <div id="eveningList" class="assignment-list"></div>
-    </div>
-  </div>
- </div>
   <!-- All Products Card (bottom) -->
   <div class="products-management-card">
     <div class="card-header-flex">
@@ -130,10 +131,10 @@
     <div class="form-group">
       <label>📅 Days</label>
       <div id="daysCheckboxes" style="display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; margin-top:6px;"></div>
-<div style="display:flex; gap:12px; margin-top:8px; flex-wrap:wrap;">
-  <button type="button" class="btn-cancel" style="flex:0; padding:6px 12px; white-space:nowrap;" onclick="selectAllDays()">Select All</button>
-  <button type="button" class="btn-cancel" style="flex:0; padding:6px 12px; white-space:nowrap;" onclick="unselectAllDays()">Unselect All</button>
-</div>
+      <div style="display:flex; gap:12px; margin-top:8px; flex-wrap:wrap;">
+        <button type="button" class="btn-cancel" style="flex:0; padding:6px 12px; white-space:nowrap;" onclick="selectAllDays('daysCheckboxes')">Select All</button>
+        <button type="button" class="btn-cancel" style="flex:0; padding:6px 12px; white-space:nowrap;" onclick="unselectAllDays('daysCheckboxes')">Unselect All</button>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeAssignmentModal()">Cancel</button>
@@ -163,9 +164,6 @@ let products = [], assignments = [], logs = [];
 let actionSheetTarget = null, activeTab = 'log';
 let sortableMorning = null, sortableEvening = null, currentBrandModalBrandId = null;
 
-// Weekdays for days selection
-const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
 // ======================== HELPERS ============================
 function formatDateForDisplay(d) { return d.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }); }
 function formatDateISO(d) { return d.toISOString().split('T')[0]; }
@@ -190,32 +188,6 @@ function loadProductsLocal() { if(currentUserEmail){ const p=localStorage.getIte
 function saveAssignmentsLocal() { if(currentUserEmail) localStorage.setItem(`assignments_${currentUserEmail}`, JSON.stringify(assignments)); }
 function loadAssignmentsLocal() { if(currentUserEmail){ const a=localStorage.getItem(`assignments_${currentUserEmail}`); if(a) assignments=JSON.parse(a); } }
 
-// ======================== DAYS CHECKBOXES ========================
-function renderDayCheckboxes(selectedDaysStr = '') {
-  const selectedSet = new Set(selectedDaysStr.split(',').map(s => s.trim()).filter(Boolean));
-  const container = document.getElementById('daysCheckboxes');
-  container.innerHTML = WEEKDAYS.map(day => {
-    const checked = selectedSet.has(day) ? 'checked' : '';
-    return `<label style="display:flex; align-items:center; gap:8px; margin:0; padding:2px 0; font-size:12px; cursor:pointer;">
-      <input type="checkbox" value="${day}" ${checked} style="margin:0; width:16px; height:16px;">
-      <span>${day}</span>
-    </label>`;
-  }).join('');
-}
-
-function getSelectedDays() {
-  return Array.from(document.querySelectorAll('#daysCheckboxes input:checked'))
-              .map(cb => cb.value).join(',');
-}
-
-function selectAllDays() {
-  document.querySelectorAll('#daysCheckboxes input').forEach(cb => cb.checked = true);
-}
-
-function unselectAllDays() {
-  document.querySelectorAll('#daysCheckboxes input').forEach(cb => cb.checked = false);
-}
-
 // ======================== TODAY'S ROUTINE ========================
 function renderLogTab() {
   const container = document.getElementById('routineContainer');
@@ -224,7 +196,7 @@ function renderLogTab() {
   const productMap = new Map(); products.forEach(p=>productMap.set(p.productId,p));
   const activeAssignments = assignments.filter(a=>{ const p=productMap.get(a.productId); return p && p.status==='Active'; });
   
-  // Filter by current day
+  // Filter by current day (global WEEKDAYS from utils)
   const today = new Date(currentDate);
   const todayDay = WEEKDAYS[today.getDay()];
   const filteredByDay = activeAssignments.filter(a => a.days && a.days.split(',').includes(todayDay));
@@ -325,7 +297,7 @@ function openAssignmentModal(id=null){
       document.getElementById('assignmentProductId').value = assignment.productId;
       document.getElementById('assignmentPhase').value = assignment.phase;
       document.getElementById('assignmentStep').value = assignment.step;
-      renderDayCheckboxes(assignment.days || '');
+      renderDayCheckboxes('daysCheckboxes', assignment.days || '');
     }
   } else {
     updateProductDropdown();
@@ -334,7 +306,7 @@ function openAssignmentModal(id=null){
     const phaseAssignments = assignments.filter(a => a.phase === phase);
     const maxStep = phaseAssignments.length ? Math.max(...phaseAssignments.map(a => a.step)) : 0;
     document.getElementById('assignmentStep').value = maxStep + 1;
-    renderDayCheckboxes('Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday'); // default all days
+    renderDayCheckboxes('daysCheckboxes', 'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday');
   }
   document.getElementById('assignmentModal').classList.add('open');
 }
@@ -344,7 +316,7 @@ async function saveAssignment(){
   const productId = document.getElementById('assignmentProductId').value;
   const phase = document.getElementById('assignmentPhase').value;
   let step = parseInt(document.getElementById('assignmentStep').value);
-  const days = getSelectedDays();
+  const days = getSelectedDays('daysCheckboxes');
   if (!productId || !phase || isNaN(step)) { showToast('All fields required', 'error'); return; }
   let newId = assignmentId;
   let isNew = false;
