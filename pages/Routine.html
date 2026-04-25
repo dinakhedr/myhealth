@@ -6,8 +6,7 @@
   <title>Routine · Health Tracker</title>
   <link rel="manifest" href="../manifest.json">
   <link rel="apple-touch-icon" sizes="180x180" href="../images/icon.png">
-  <link rel="icon" type="image/png" sizes="180x180" href="../images/icon.png">
-  <link rel="shortcut icon" href="../images/icon.png">
+  <link rel="icon" type="image/png" href="../images/icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/styles.css">
@@ -19,6 +18,7 @@
   <script src="https://apis.google.com/js/api.js"></script>
 </head>
 <body>
+
 <div class="loading-overlay" id="loadingOverlay">
   <div class="loading-box"><div class="spinner"></div><p>Loading…</p></div>
 </div>
@@ -27,61 +27,42 @@
   <div class="header">
     <h1>🧴 Routine</h1>
     <div class="header-actions">
-      <button class="hdr-icon-btn" id="syncBtn" onclick="syncAll()">↻</button>
+      <button class="hdr-icon-btn" id="syncBtn" title="Sync">↻</button>
       <button class="hdr-icon-btn" onclick="logout()">⏻</button>
     </div>
   </div>
 
-  <div class="date-nav">
-    <button class="hdr-icon-btn" onclick="changeDate(-1)">←</button>
-    <h2 id="dateDisplay"></h2>
-    <button class="hdr-icon-btn" onclick="changeDate(1)">→</button>
-  </div>
-
-  <!-- tabs inside a card (Installments style) -->
+  <!-- My Routine Steps -->
   <div class="card">
-    <div class="tab-bar">
-      <button class="tab-btn active" onclick="switchTab('log')">📋 Today's Routine</button>
-      <button class="tab-btn" onclick="switchTab('assignments')">📌 My Routine</button>
+    <div class="card-header-flex">
+      <div class="card-title" style="margin-bottom:0">📌 My Routine Steps</div>
+      <button class="add-product-card-btn" id="addStepBtn">➕ Add Step</button>
     </div>
 
-    <div id="logTab" class="tab-content active">
-      <div class="completed-toggle">
-        <label for="hideCompletedCheckbox">Hide completed steps</label>
-        <input type="checkbox" id="hideCompletedCheckbox" onchange="renderLogTab()">
-      </div>
-      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-      <div id="routineContainer"></div>
+    <div id="morningAssignments" class="assignment-phase-container" style="margin-top:16px">
+      <div class="assignment-phase-title">🌅 Morning</div>
+      <div id="morningList" class="assignment-list"></div>
     </div>
-
-    <div id="assignmentsTab" class="tab-content" style="display:none">
-      <div class="add-btn-container">
-<button class="add-product-card-btn" onclick="openAssignmentModal()" style="width:100%; justify-content:center;">➕ Add Routine Step</button>      </div>
-      <div id="morningAssignments" class="assignment-phase-container">
-        <div class="assignment-phase-title phase-header-style">🌅 Morning</div>
-        <div id="morningList" class="assignment-list"></div>
-      </div>
-      <div id="eveningAssignments" class="assignment-phase-container">
-        <div class="assignment-phase-title phase-header-style">🌙 Evening</div>
-        <div id="eveningList" class="assignment-list"></div>
-      </div>
+    <div id="eveningAssignments" class="assignment-phase-container">
+      <div class="assignment-phase-title">🌙 Evening</div>
+      <div id="eveningList" class="assignment-list"></div>
     </div>
   </div>
 
-  <!-- All Products Card (bottom) -->
+  <!-- All Products -->
   <div class="products-management-card">
     <div class="card-header-flex">
       <h3 class="card-title-text">🧴 All Products</h3>
-      <button class="add-product-card-btn" onclick="openProductModal()">➕ Add New Product</button>
+      <button class="add-product-card-btn" id="addProductBtn">➕ Add Product</button>
     </div>
-    <div id="productsCardContainer"></div>
+    <div id="productsContainer"></div>
   </div>
 </div>
 
 <div id="bottomNavMount"></div>
 <div class="toast" id="toast"></div>
 
-<!-- Modals (product, assignment, brand products, action sheet) -->
+<!-- Product Modal -->
 <div class="modal-backdrop" id="productModal">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -99,549 +80,516 @@
       </div>
     </div>
     <div class="form-group">
-      <label>Use For *</label>
+      <label>Use For</label>
       <div id="useForCheckboxes"></div>
     </div>
-    <div class="form-group" style="display: flex; flex-direction: row; align-items: center; gap: 12px;">
-      <label style="margin-bottom: 0;">Active / Inactive</label>
-      <div class="status-toggle active" id="productStatusToggle" onclick="toggleProductStatusUI(event)">
-        <div class="status-toggle-knob"></div>
-      </div>
+    <div class="form-group" style="flex-direction:row;align-items:center;gap:12px;">
+      <label style="margin-bottom:0">Active</label>
+      <div class="status-toggle active" id="productStatusToggle"><div class="status-toggle-knob"></div></div>
       <input type="hidden" id="productStatusInput" value="Active">
     </div>
     <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeProductModal()">Cancel</button>
-      <button class="btn-save" onclick="saveProduct()">Save</button>
+      <button class="btn-cancel" id="cancelProductBtn">Cancel</button>
+      <button class="btn-save" id="saveProductBtn">Save</button>
     </div>
   </div>
 </div>
 
+<!-- Assignment Modal -->
 <div class="modal-backdrop" id="assignmentModal">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-title" id="assignmentModalTitle">➕ Add Routine</div>
+    <div class="modal-title" id="assignmentModalTitle">➕ Add Routine Step</div>
     <input type="hidden" id="editAssignmentId">
-    <div class="brand-filter-row"><label>Filter by Brand</label><select id="assignmentBrandFilter"></select></div>
-    <div class="form-group"><label>Product *</label><select id="assignmentProductId"></select></div>
+    <div class="brand-filter-row">
+      <label>Filter by Brand</label>
+      <select id="assignmentBrandFilter"></select>
+    </div>
+    <div class="form-group">
+      <label>Product *</label>
+      <select id="assignmentProductId"></select>
+    </div>
     <div class="form-row">
-      <div class="form-group"><label>Phase *</label><select id="assignmentPhase"><option value="Morning">🌅 Morning</option><option value="Evening">🌙 Evening</option></select></div>
-      <div class="form-group"><label>Step *</label><input type="number" id="assignmentStep" min="1" step="1" value="1" inputmode="numeric"></div>
+      <div class="form-group">
+        <label>Phase *</label>
+        <select id="assignmentPhase">
+          <option value="Morning">🌅 Morning</option>
+          <option value="Evening">🌙 Evening</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Step *</label>
+        <input type="number" id="assignmentStep" min="1" step="1" value="1" inputmode="numeric">
+      </div>
     </div>
     <div class="form-group">
       <label>📅 Days</label>
-      <div id="daysCheckboxes" style="display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; margin-top:6px;"></div>
-      <div style="display:flex; gap:12px; margin-top:8px; flex-wrap:wrap;">
-        <button type="button" class="btn-cancel" style="flex:0; padding:6px 12px; white-space:nowrap;" onclick="selectAllDays('daysCheckboxes')">Select All</button>
-        <button type="button" class="btn-cancel" style="flex:0; padding:6px 12px; white-space:nowrap;" onclick="unselectAllDays('daysCheckboxes')">Unselect All</button>
+      <div id="daysCheckboxes"></div>
+      <div style="display:flex;gap:12px;margin-top:8px;">
+        <button type="button" class="btn-cancel" style="flex:0;padding:6px 14px;font-size:12px;"
+                onclick="selectAllDays('daysCheckboxes')">All</button>
+        <button type="button" class="btn-cancel" style="flex:0;padding:6px 14px;font-size:12px;"
+                onclick="unselectAllDays('daysCheckboxes')">None</button>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeAssignmentModal()">Cancel</button>
-      <button class="btn-save" onclick="saveAssignment()">Save</button>
+      <button class="btn-cancel" id="cancelAssignmentBtn">Cancel</button>
+      <button class="btn-save" id="saveAssignmentBtn">Save</button>
     </div>
   </div>
 </div>
 
-<div class="modal-backdrop" id="brandProductsModal">
-  <div class="modal"><div class="modal-handle"></div><div class="modal-title" id="brandProductsTitle">Products</div>
-  <div id="brandProductsList"></div>
-  <div class="modal-footer"><button class="btn-cancel" onclick="closeBrandProductsModal()">Close</button></div>
+<!-- Brand Products Modal -->
+<div class="modal-backdrop" id="brandModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="brandModalTitle">Products</div>
+    <div id="brandProductsList"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" id="closeBrandBtn">Close</button>
+    </div>
   </div>
 </div>
 
+<!-- Action Sheet -->
 <div class="sheet-backdrop" id="actionSheet">
-  <div class="sheet"><div class="sheet-handle"></div><div class="sheet-title" id="sheetTitle">Options</div>
-  <button class="sheet-action" id="sheetEditBtn" onclick="sheetEdit()"><span class="sheet-action-icon">✏️</span>Edit</button>
-  <button class="sheet-action danger" id="sheetDeleteBtn" onclick="sheetDelete()"><span class="sheet-action-icon">🗑️</span>Delete</button>
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="sheetTitle">Options</div>
+    <button class="sheet-action" id="sheetEditBtn"><span class="sheet-action-icon">✏️</span>Edit</button>
+    <button class="sheet-action danger" id="sheetDeleteBtn"><span class="sheet-action-icon">🗑️</span>Delete</button>
   </div>
 </div>
-
-<style>
-  /* additional style for step number badge */
-  .step-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 32px;
-    height: 32px;
-    background: var(--brand-grad);
-    color: white;
-    font-weight: 700;
-    font-size: 14px;
-    border-radius: 10px;
-    padding: 0 8px;
-    margin-right: 12px;
-    flex-shrink: 0;
-  }
-  .assignment-item-new {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .assignment-item-new .drag-handle {
-    margin-top: 4px;
-  }
-  .assignment-details {
-    flex: 1;
-  }
-  .assignment-product {
-    font-weight: 700;
-    font-size: 14px;
-    color: var(--text);
-    margin-bottom: 4px;
-  }
-  .assignment-brand {
-    font-size: 11px;
-    color: var(--brand);
-    font-weight: 500;
-    margin-bottom: 2px;
-  }
-  .assignment-days {
-    font-size: 10px;
-    color: var(--text-3);
-  }
-  .more-btn {
-    align-self: center;
-  }
-  /* Today's routine: remove step number from product name */
-  .step-name {
-    font-weight: 600;
-    font-size: 14px;
-    color: var(--text);
-  }
-</style>
 
 <script>
-// ======================== STATE ============================
-let spreadsheetId = null, currentUserEmail = null, currentDate = new Date();
-let products = [], assignments = [], logs = [];
-let actionSheetTarget = null, activeTab = 'log';
-let sortableMorning = null, sortableEvening = null, currentBrandModalBrandId = null;
+// ── State ──────────────────────────────────────────────────
+let spreadsheetId = null, currentUserEmail = null;
+let products = [], assignments = [];
+let actionSheetTarget = null;
+let sortableMorning = null, sortableEvening = null;
+let currentBrandId = null;
 
-// ======================== HELPERS ============================
-function formatDateForDisplay(d) { return d.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }); }
-function formatDateISO(d) { return d.toISOString().split('T')[0]; }
-function changeDate(delta) { currentDate.setDate(currentDate.getDate() + delta); renderDate(); loadTodaysLogs(); if (activeTab === 'log') renderLogTab(); }
-function renderDate() { document.getElementById('dateDisplay').innerText = formatDateForDisplay(currentDate); }
-
-function switchTab(tab) {
-  activeTab = tab;
-  document.getElementById('logTab').style.display = tab === 'log' ? 'block' : 'none';
-  document.getElementById('assignmentsTab').style.display = tab === 'assignments' ? 'block' : 'none';
-  document.querySelectorAll('.tab-btn').forEach((btn, i) => btn.classList.toggle('active', (tab === 'log' && i===0) || (tab === 'assignments' && i===1)));
-  if (tab === 'log') renderLogTab(); else renderAssignmentsList();
+// ── Local cache ────────────────────────────────────────────
+function saveLocal() {
+  if (!currentUserEmail) return;
+  localStorage.setItem(`products_${currentUserEmail}`,    JSON.stringify(products));
+  localStorage.setItem(`assignments_${currentUserEmail}`, JSON.stringify(assignments));
+}
+function loadLocal() {
+  if (!currentUserEmail) return;
+  const p = localStorage.getItem(`products_${currentUserEmail}`);    if (p) products     = JSON.parse(p);
+  const a = localStorage.getItem(`assignments_${currentUserEmail}`); if (a) assignments  = JSON.parse(a);
 }
 
-// ======================== DATA LOADING ========================
-async function loadProducts() { if(!spreadsheetId) return; try{ const res=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId, range:`'${PRODUCTS_SHEET}'!A2:E`}); const rows=res.result.values||[]; products=rows.map(r=>({productId:r[0]||'',brandId:r[1]||'',product:r[2]||'',useFor:r[3]||'',status:r[4]||'Active'})).filter(p=>p.productId); saveProductsLocal(); }catch(e){console.error(e);} }
-async function loadAssignments() { if(!spreadsheetId) return; try{ const res=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId, range:`'${ROUTINE_SHEET}'!A2:E`}); const rows=res.result.values||[]; assignments=rows.map(r=>({assignmentId:r[0]||'',productId:r[1]||'',phase:r[2]||'',step:parseInt(r[3])||0, days: r[4] || 'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday'})).filter(a=>a.assignmentId); saveAssignmentsLocal(); }catch(e){console.error(e);} }
-async function loadLogs() { if(!spreadsheetId) return; try{ const res=await gapi.client.sheets.spreadsheets.values.get({spreadsheetId, range:`'${ROUTINE_LOG_SHEET}'!A2:G`}); const rows=res.result.values||[]; logs=rows.map(r=>({date:r[0]||'',productId:r[1]||'',phase:r[2]||'',step:parseInt(r[3])||0,productName:r[4]||'',timestamp:r[5]||'',notes:r[6]||''})); }catch(e){console.error(e);} }
-async function loadTodaysLogs() { await loadLogs(); if(activeTab==='log') renderLogTab(); }
-function saveProductsLocal() { if(currentUserEmail) localStorage.setItem(`products_${currentUserEmail}`, JSON.stringify(products)); }
-function loadProductsLocal() { if(currentUserEmail){ const p=localStorage.getItem(`products_${currentUserEmail}`); if(p) products=JSON.parse(p); } }
-function saveAssignmentsLocal() { if(currentUserEmail) localStorage.setItem(`assignments_${currentUserEmail}`, JSON.stringify(assignments)); }
-function loadAssignmentsLocal() { if(currentUserEmail){ const a=localStorage.getItem(`assignments_${currentUserEmail}`); if(a) assignments=JSON.parse(a); } }
+// ── Sheet loaders ──────────────────────────────────────────
+async function loadProducts() {
+  const res = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId, range: `'${PRODUCTS_SHEET}'!A2:E` });
+  products = (res.result.values||[]).map(r => ({
+    productId:r[0]||'', brandId:r[1]||'', product:r[2]||'', useFor:r[3]||'', status:r[4]||'Active'
+  })).filter(p => p.productId);
+  saveLocal();
+}
 
-// ======================== TODAY'S ROUTINE ========================
-function renderLogTab() {
-  const container = document.getElementById('routineContainer');
-  const dateStr = formatDateISO(currentDate);
-  const todaysLogMap = new Map(); logs.filter(l=>l.date===dateStr).forEach(l=>todaysLogMap.set(`${l.phase}|${l.step}`,true));
-  const productMap = new Map(); products.forEach(p=>productMap.set(p.productId,p));
-  const activeAssignments = assignments.filter(a=>{ const p=productMap.get(a.productId); return p && p.status==='Active'; });
-  
-  // Filter by current day (global WEEKDAYS from utils)
-  const today = new Date(currentDate);
-  const todayDay = WEEKDAYS[today.getDay()];
-  const filteredByDay = activeAssignments.filter(a => a.days && a.days.split(',').includes(todayDay));
-  
-  const hideCompleted = document.getElementById('hideCompletedCheckbox').checked;
-  let total=0, completed=0, html='';
-  for(const phase of ['Morning','Evening']){
-    let full = filteredByDay.filter(a=>a.phase===phase).sort((a,b)=>a.step-b.step);
-    let display = hideCompleted ? full.filter(a=>!todaysLogMap.has(`${a.phase}|${a.step}`)) : full;
-    if(!full.length) continue;
-    total+=full.length; completed+=full.filter(a=>todaysLogMap.has(`${a.phase}|${a.step}`)).length;
-    html+=`<div class="phase-section"><div class="phase-header"><span>${phase==='Morning'?'🌅':'🌙'} ${phase}</span><span class="phase-badge">${full.length} steps</span></div>`;
-    for(const a of display){
-      const p = productMap.get(a.productId); if(!p) continue;
-      const isCompleted = todaysLogMap.has(`${a.phase}|${a.step}`);
-      // removed step number from product name
-      html+=`<div class="step-item"><div class="step-check ${isCompleted?'completed':''}" onclick="toggleLog('${a.productId}','${a.phase}',${a.step},'${escapeHtml(p.product)}')">${isCompleted?'✓':''}</div><div class="step-info"><div class="step-name">${escapeHtml(p.product)}</div>
-      <div class="step-desc"><span class="step-brand">${escapeHtml(getBrandNameFromId(p.brandId))}</span></div></div></div>`;
-    }
-    html+=`</div>`;
+async function loadAssignments() {
+  const res = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId, range: `'${ROUTINE_SHEET}'!A2:E` });
+  assignments = (res.result.values||[]).map(r => ({
+    assignmentId:r[0]||'', productId:r[1]||'', phase:r[2]||'', step:Math.round(Number(r[3]))||0,
+    days: r[4] || 'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday'
+  })).filter(a => a.assignmentId);
+  saveLocal();
+}
+
+async function saveProductsToSheet() {
+  await gapi.client.sheets.spreadsheets.values.clear({ spreadsheetId, range: `'${PRODUCTS_SHEET}'!A2:E` });
+  if (products.length) {
+    await gapi.client.sheets.spreadsheets.values.update({
+      spreadsheetId, range: `'${PRODUCTS_SHEET}'!A2`, valueInputOption:'RAW',
+      resource: { values: products.map(p => [p.productId,p.brandId,p.product,p.useFor,p.status]) }
+    });
   }
-  container.innerHTML = html || '<div class="empty-state">No active assignments for today. Add some in "My Routine".</div>';
-  document.getElementById('progressFill').style.width = total ? (completed/total*100)+'%' : '0%';
-}
-async function toggleLog(productId,phase,step,productName){
-  const dateStr = formatDateISO(currentDate);
-  const alreadyLogged = logs.some(l=>l.date===dateStr && l.productId===productId && l.phase===phase && l.step===step);
-  try{
-    if(!alreadyLogged){
-      await gapi.client.sheets.spreadsheets.values.append({spreadsheetId, range:`'${ROUTINE_LOG_SHEET}'!A2:G`, valueInputOption:'RAW', resource:{values:[[dateStr,productId,phase,step,productName,new Date().toISOString(),'']]}});
-      showToast('✅ Completed');
-    } else {
-      const res = await gapi.client.sheets.spreadsheets.values.get({spreadsheetId, range:`'${ROUTINE_LOG_SHEET}'!A2:G`});
-      const rows = res.result.values||[];
-      const newRows = rows.filter(r=>!(r[0]===dateStr && r[1]===productId && r[2]===phase && r[3]==step));
-      await gapi.client.sheets.spreadsheets.values.clear({spreadsheetId, range:`'${ROUTINE_LOG_SHEET}'!A2:G`});
-      if(newRows.length) await gapi.client.sheets.spreadsheets.values.update({spreadsheetId, range:`'${ROUTINE_LOG_SHEET}'!A2`, valueInputOption:'RAW', resource:{values:newRows}});
-      showToast('Marked incomplete');
-    }
-    await loadLogs(); renderLogTab();
-  } catch(e){ console.error(e); showToast('❌ Failed','error'); }
+  saveLocal();
 }
 
-// ======================== MY ROUTINE ========================
-function renderAssignmentsList(){
-  const productMap = new Map(); products.forEach(p=>productMap.set(p.productId,p));
-  const valid = assignments.filter(a=>productMap.has(a.productId));
-  const morning = valid.filter(a=>a.phase==='Morning').sort((a,b)=>a.step-b.step);
-  const evening = valid.filter(a=>a.phase==='Evening').sort((a,b)=>a.step-b.step);
-  function renderList(arr, container){
-    if(!arr.length){ container.innerHTML='<div class="empty-state-small">No assignments</div>'; return; }
-    container.innerHTML = arr.map(a=>{ 
-      const p=productMap.get(a.productId);
-      const daysArray = a.days ? a.days.split(',') : [];
-      const isAllDays = daysArray.length === 7 && WEEKDAYS.every(day => daysArray.includes(day));
-      const daysDisplay = isAllDays ? 'Daily' : (a.days ? a.days.replace(/,/g, ', ') : '');
-      return `<div class="assignment-item-new" data-id="${a.assignmentId}">
+async function saveAssignmentsToSheet() {
+  await gapi.client.sheets.spreadsheets.values.clear({ spreadsheetId, range: `'${ROUTINE_SHEET}'!A2:E` });
+  if (assignments.length) {
+    await gapi.client.sheets.spreadsheets.values.update({
+      spreadsheetId, range: `'${ROUTINE_SHEET}'!A2`, valueInputOption:'RAW',
+      resource: { values: assignments.map(a => [a.assignmentId,a.productId,a.phase,a.step,a.days]) }
+    });
+  }
+  saveLocal();
+}
+
+// ── Render assignment list ─────────────────────────────────
+function renderAssignments() {
+  const productMap = new Map(products.map(p => [p.productId, p]));
+  const morning = assignments.filter(a => a.phase==='Morning').sort((x,y) => x.step-y.step);
+  const evening = assignments.filter(a => a.phase==='Evening').sort((x,y) => x.step-y.step);
+
+  function buildList(arr, containerId) {
+    const el = document.getElementById(containerId);
+    if (!arr.length) { el.innerHTML = '<div class="empty-state-small">No steps yet</div>'; return; }
+    el.innerHTML = arr.map(a => {
+      const p = productMap.get(a.productId);
+      const inactive = p && p.status === 'Inactive';
+      return `<div class="assignment-item-new${inactive?' item-inactive':''}" data-id="${a.assignmentId}">
         <div class="drag-handle">☰</div>
         <div class="step-badge">${a.step}</div>
         <div class="assignment-details">
-          <div class="assignment-product">${escapeHtml(p.product)}</div>
-          <div class="assignment-brand">${escapeHtml(getBrandNameFromId(p.brandId))}</div>
-          <div class="assignment-days">${escapeHtml(daysDisplay)}</div>
+          <div class="assignment-product">${escapeHtml(p ? p.product : '—')}${inactive?'<span class="inactive-badge" style="margin-left:6px">Inactive</span>':''}</div>
+          <div class="assignment-brand">${escapeHtml(getBrandNameFromId(p ? p.brandId : ''))}</div>
+          <div class="assignment-days">📅 ${formatDays(a.days)}</div>
         </div>
-        <button class="more-btn" onclick="openActionSheet('assignment','${a.assignmentId}')">⋮</button>
+        <button class="more-btn" data-action-type="assignment" data-action-id="${a.assignmentId}">⋮</button>
       </div>`;
     }).join('');
   }
-  renderList(morning, document.getElementById('morningList'));
-  renderList(evening, document.getElementById('eveningList'));
-  if(sortableMorning) sortableMorning.destroy(); if(sortableEvening) sortableEvening.destroy();
-  sortableMorning = new Sortable(document.getElementById('morningList'), { group:{name:'routine', pull:true, revertClone:false, put:true}, animation:200, handle:'.drag-handle', onEnd:handleReorder });
-  sortableEvening = new Sortable(document.getElementById('eveningList'), { group:{name:'routine', pull:true, revertClone:false, put:true}, animation:200, handle:'.drag-handle', onEnd:handleReorder });
-}
-async function handleReorder(){
-  const morningIds = Array.from(document.querySelectorAll('#morningList .assignment-item-new')).map(el=>el.dataset.id);
-  const eveningIds = Array.from(document.querySelectorAll('#eveningList .assignment-item-new')).map(el=>el.dataset.id);
-  let newAssignments = [];
-  morningIds.forEach((id,idx)=>{ const ex=assignments.find(a=>a.assignmentId===id); if(ex) newAssignments.push({...ex, phase:'Morning', step:idx+1}); });
-  eveningIds.forEach((id,idx)=>{ const ex=assignments.find(a=>a.assignmentId===id); if(ex) newAssignments.push({...ex, phase:'Evening', step:idx+1}); });
-  let changed = newAssignments.length !== assignments.length;
-  if(!changed) for(let i=0;i<newAssignments.length;i++){ const old=assignments.find(a=>a.assignmentId===newAssignments[i].assignmentId); if(!old || old.phase!==newAssignments[i].phase || old.step!==newAssignments[i].step){ changed=true; break; } }
-  if(!changed) return;
-  assignments = newAssignments;
-  saveAssignmentsLocal(); await saveAssignmentsToSheet(); showToast('✅ Routine order updated');
-  renderAssignmentsList(); if(activeTab==='log') renderLogTab();
-}
-function openAssignmentModal(id=null){
-  const isEdit = !!id;
-  document.getElementById('assignmentModalTitle').innerText = isEdit ? '✏️ Edit Routine' : '➕ Add Routine';
-  document.getElementById('editAssignmentId').value = id || '';
-  const brandFilter = document.getElementById('assignmentBrandFilter');
-  brandFilter.innerHTML = '<option value="">All Brands</option>' + BRANDS.map(b => `<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('');
-  brandFilter.onchange = () => updateProductDropdown();
-  const updateProductDropdown = () => {
-    const selectedBrand = brandFilter.value;
-    const productSelect = document.getElementById('assignmentProductId');
-    let filtered = products.filter(p => p.status === 'Active');
-    if (selectedBrand) filtered = filtered.filter(p => p.brandId === selectedBrand);
-    productSelect.innerHTML = filtered.map(p => `<option value="${p.productId}">${escapeHtml(p.product)}</option>`).join('');
-    if (!isEdit) {
-      const phase = document.getElementById('assignmentPhase').value;
-      const phaseAssignments = assignments.filter(a => a.phase === phase);
-      const maxStep = phaseAssignments.length ? Math.max(...phaseAssignments.map(a => a.step)) : 0;
-      document.getElementById('assignmentStep').value = maxStep + 1;
-    }
-  };
-  if (isEdit) {
-    const assignment = assignments.find(a => a.assignmentId === id);
-    if (assignment) {
-      const product = products.find(p => p.productId === assignment.productId);
-      if (product) brandFilter.value = product.brandId;
-      updateProductDropdown();
-      document.getElementById('assignmentProductId').value = assignment.productId;
-      document.getElementById('assignmentPhase').value = assignment.phase;
-      document.getElementById('assignmentStep').value = assignment.step;
-      renderDayCheckboxes('daysCheckboxes', assignment.days || '');
-    }
-  } else {
-    updateProductDropdown();
-    document.getElementById('assignmentPhase').value = 'Morning';
-    const phase = 'Morning';
-    const phaseAssignments = assignments.filter(a => a.phase === phase);
-    const maxStep = phaseAssignments.length ? Math.max(...phaseAssignments.map(a => a.step)) : 0;
-    document.getElementById('assignmentStep').value = maxStep + 1;
-    renderDayCheckboxes('daysCheckboxes', 'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday');
-  }
-  document.getElementById('assignmentModal').classList.add('open');
-}
-function closeAssignmentModal(){ document.getElementById('assignmentModal').classList.remove('open'); }
-async function saveAssignment(){
-  const assignmentId = document.getElementById('editAssignmentId').value;
-  const productId = document.getElementById('assignmentProductId').value;
-  const phase = document.getElementById('assignmentPhase').value;
-  let step = parseInt(document.getElementById('assignmentStep').value);
-  const days = getSelectedDays('daysCheckboxes');
-  if (!productId || !phase || isNaN(step)) { showToast('All fields required', 'error'); return; }
-  let newId = assignmentId;
-  let isNew = false;
-  if (!newId) { newId = generateAssignmentId(); isNew = true; }
-  const newAssignment = { assignmentId: newId, productId, phase, step, days };
-  if (isNew) assignments.push(newAssignment);
-  else { const idx = assignments.findIndex(a => a.assignmentId === newId); if (idx !== -1) assignments[idx] = newAssignment; }
-  // Reorder steps for the phase
-  const phaseAssignments = assignments.filter(a => a.phase === phase).sort((a,b) => a.step - b.step);
-  phaseAssignments.forEach((a, idx) => { a.step = idx + 1; });
-  closeAssignmentModal();
-  await saveAssignmentsToSheet();
-  renderAssignmentsList();
-  renderLogTab();
-  showToast(isNew ? '✅ Added' : '✅ Updated');
+
+  buildList(morning, 'morningList');
+  buildList(evening, 'eveningList');
+
+  // Re-init sortable
+  if (sortableMorning) sortableMorning.destroy();
+  if (sortableEvening) sortableEvening.destroy();
+  sortableMorning = new Sortable(document.getElementById('morningList'), {
+    group: { name:'routine', pull:true, put:true }, animation:200, handle:'.drag-handle', onEnd: handleReorder
+  });
+  sortableEvening = new Sortable(document.getElementById('eveningList'), {
+    group: { name:'routine', pull:true, put:true }, animation:200, handle:'.drag-handle', onEnd: handleReorder
+  });
 }
 
-// ======================== PRODUCTS CARD ========================
-function renderProductsCard(){
-  const container = document.getElementById('productsCardContainer');
-  const uniqueBrandIds = [...new Set(products.map(p=>p.brandId))];
-  if(!uniqueBrandIds.length){ container.innerHTML='<div class="empty-state">✨ No products yet. Tap "Add New Product" to start.</div>'; return; }
-  const sorted = uniqueBrandIds.sort((a,b)=>getBrandNameFromId(a).localeCompare(getBrandNameFromId(b)));
-  let html='';
-  for(const brandId of sorted){
-    const brand = BRANDS.find(b=>b.id===brandId) || { logo:null, name:brandId };
-    const logoHtml = brand && brand.logo ? `<img src="../logos/${brand.logo}" alt="${escapeHtml(brand.name)}">` : '🧴';
-    html+=`<div class="brand-list-item" onclick="openBrandProducts('${brandId}')"><div class="brand-list-logo">${logoHtml}</div><div class="brand-list-name">${escapeHtml(brand.name)}</div><div class="brand-list-arrow">→</div></div>`;
-  }
-  container.innerHTML = html;
+async function handleReorder() {
+  const morningIds = [...document.querySelectorAll('#morningList .assignment-item-new')].map(el => el.dataset.id);
+  const eveningIds = [...document.querySelectorAll('#eveningList .assignment-item-new')].map(el => el.dataset.id);
+  const newAssignments = [];
+  morningIds.forEach((id,i) => { const ex = assignments.find(a => a.assignmentId===id); if(ex) newAssignments.push({...ex,phase:'Morning',step:i+1}); });
+  eveningIds.forEach((id,i) => { const ex = assignments.find(a => a.assignmentId===id); if(ex) newAssignments.push({...ex,phase:'Evening',step:i+1}); });
+  assignments = newAssignments;
+  await saveAssignmentsToSheet();
+  showToast('✅ Order updated');
+  renderAssignments();
 }
-function openBrandProducts(brandId) {
-  currentBrandModalBrandId = brandId;
-  const brandProducts = products.filter(p => p.brandId === brandId);
-  const brand = BRANDS.find(b => b.id === brandId) || { name: brandId };
-  document.getElementById('brandProductsTitle').innerText = brand.name;
-  const container = document.getElementById('brandProductsList');
-  container.innerHTML = brandProducts.map(p => {
-    const statusClass = p.status === 'Active' ? 'active' : 'inactive';
-    const useForText = p.useFor ? escapeHtml(p.useFor) : '';
+
+// ── Render products card ───────────────────────────────────
+function renderProducts() {
+  const el = document.getElementById('productsContainer');
+  const brands = [...new Set(products.map(p => p.brandId))].sort((a,b) => getBrandNameFromId(a).localeCompare(getBrandNameFromId(b)));
+  if (!brands.length) { el.innerHTML = '<div class="empty-state">✨ No products yet. Tap "Add Product" to start.</div>'; return; }
+  el.innerHTML = brands.map(brandId => {
+    const brand = BRANDS.find(b => b.id===brandId) || { name:brandId, logo:null };
+    const logoHtml = brand.logo
+      ? `<img src="../logos/${brand.logo}" alt="${escapeHtml(brand.name)}">`
+      : '🧴';
+    const count = products.filter(p => p.brandId===brandId).length;
+    return `<div class="brand-list-item" data-brand="${brandId}">
+      <div class="brand-list-logo">${logoHtml}</div>
+      <div class="brand-list-name">${escapeHtml(brand.name)}</div>
+      <div style="font-size:11px;color:var(--text-3);margin-right:4px">${count}</div>
+      <div class="brand-list-arrow">→</div>
+    </div>`;
+  }).join('');
+}
+
+function openBrandModal(brandId) {
+  currentBrandId = brandId;
+  const brand = BRANDS.find(b => b.id===brandId) || { name:brandId };
+  document.getElementById('brandModalTitle').textContent = brand.name;
+  const brandProducts = products.filter(p => p.brandId===brandId);
+  document.getElementById('brandProductsList').innerHTML = brandProducts.map(p => {
+    const statusClass = p.status==='Active' ? 'active' : 'inactive';
     return `<div class="product-modal-item">
       <div class="product-modal-info">
         <div class="product-modal-name">${escapeHtml(p.product)}</div>
-        <div class="product-modal-meta" style="font-size:11px; color:var(--text-3);">${useForText}</div>
+        <div class="product-modal-meta">${escapeHtml(p.useFor||'')}</div>
       </div>
-      <div class="status-toggle ${statusClass}" onclick="toggleProductStatus('${p.productId}', event)"><div class="status-toggle-knob"></div></div>
-      <button class="more-btn" onclick="openActionSheet('product', '${p.productId}'); event.stopPropagation();">⋮</button>
+      <div class="status-toggle ${statusClass}" data-toggle-product="${p.productId}"><div class="status-toggle-knob"></div></div>
+      <button class="more-btn" data-action-type="product" data-action-id="${p.productId}">⋮</button>
     </div>`;
   }).join('');
-  document.getElementById('brandProductsModal').classList.add('open');
+  openModal('brandModal');
 }
-  
-function closeBrandProductsModal(){ document.getElementById('brandProductsModal').classList.remove('open'); currentBrandModalBrandId=null; }
-async function toggleProductStatus(productId,event){
-  event.stopPropagation(); const p=products.find(p=>p.productId===productId); if(!p) return;
-  p.status = p.status==='Active'?'Inactive':'Active';
-  await saveProductsToSheet(); renderProductsCard(); if(currentBrandModalBrandId) openBrandProducts(currentBrandModalBrandId);
-  renderAssignmentsList(); renderLogTab(); showToast(`Product ${p.status.toLowerCase()}`);
-}
+
+// ── Product modal ──────────────────────────────────────────
 function openProductModal(id = null) {
   const isEdit = !!id;
-  document.getElementById('productModalTitle').innerText = isEdit ? '✏️ Edit Product' : '➕ Add Product';
+  document.getElementById('productModalTitle').textContent = isEdit ? '✏️ Edit Product' : '➕ Add Product';
   document.getElementById('editProductId').value = id || '';
 
   const brandSelect = document.getElementById('productBrand');
   brandSelect.innerHTML = BRANDS.map(b => `<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('');
-  brandSelect.onchange = () => {
-    const brandId = brandSelect.value;
-    const brand = BRANDS.find(b => b.id === brandId);
-    const preview = document.getElementById('productBrandPreview');
-    if (brand && brand.logo) preview.innerHTML = `<img src="../logos/${brand.logo}" style="width:28px;height:28px;border-radius:50%;">`;
-    else preview.innerHTML = '🧴';
-  };
 
-  const statusToggle = document.getElementById('productStatusToggle');
-  const statusInput = document.getElementById('productStatusInput');
+  const updatePreview = () => {
+    const brand = BRANDS.find(b => b.id===brandSelect.value);
+    const preview = document.getElementById('productBrandPreview');
+    preview.innerHTML = brand?.logo ? `<img src="../logos/${brand.logo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : '🧴';
+  };
+  brandSelect.onchange = updatePreview;
 
   if (isEdit) {
-    const product = products.find(p => p.productId === id);
-    if (product) {
-      document.getElementById('productBrand').value = product.brandId;
-      document.getElementById('productName').value = product.product;
-      renderUseForCheckboxes(product.useFor);
-      // Status toggle
-      if (product.status === 'Active') {
-        statusToggle.classList.add('active'); statusToggle.classList.remove('inactive');
-        statusInput.value = 'Active';
-      } else {
-        statusToggle.classList.add('inactive'); statusToggle.classList.remove('active');
-        statusInput.value = 'Inactive';
-      }
-      brandSelect.dispatchEvent(new Event('change'));
+    const p = products.find(p => p.productId===id);
+    if (p) {
+      document.getElementById('productName').value = p.product;
+      brandSelect.value = p.brandId;
+      renderUseForCheckboxes(p.useFor);
+      setStatusToggle('productStatusToggle','productStatusInput', p.status);
     }
   } else {
-    document.getElementById('productBrand').value = BRANDS[0].id;
     document.getElementById('productName').value = '';
-    renderUseForCheckboxes('');   // no selections
-    statusToggle.classList.add('active'); statusToggle.classList.remove('inactive');
-    statusInput.value = 'Active';
-    brandSelect.dispatchEvent(new Event('change'));
+    brandSelect.value = BRANDS[0].id;
+    renderUseForCheckboxes('');
+    setStatusToggle('productStatusToggle','productStatusInput','Active');
   }
-  document.getElementById('productModal').classList.add('open');
+  updatePreview();
+  openModal('productModal');
 }
 
-function closeProductModal(){ document.getElementById('productModal').classList.remove('open'); }
 async function saveProduct() {
-  const productId = document.getElementById('editProductId').value;
-  const brandId = document.getElementById('productBrand').value;
+  const id          = document.getElementById('editProductId').value;
+  const brandId     = document.getElementById('productBrand').value;
   const productName = document.getElementById('productName').value.trim();
-  const useFor = getSelectedUseFor();
-  const status = document.getElementById('productStatusInput').value;
-
+  const useFor      = getSelectedUseFor();
+  const status      = document.getElementById('productStatusInput').value;
   if (!productName) { showToast('Product name required', 'error'); return; }
-
-  let newId = productId;
-  let isNew = false;
-  if (!newId) { newId = generateProductId(); isNew = true; }
-
-  const newProduct = { productId: newId, brandId, product: productName, useFor, status };
-  if (isNew) products.push(newProduct);
-  else { const idx = products.findIndex(p => p.productId === newId); if (idx !== -1) products[idx] = newProduct; }
-
-  closeProductModal();
+  const isNew = !id;
+  const newId = id || generateProductId();
+  const obj = { productId:newId, brandId, product:productName, useFor, status };
+  if (isNew) products.push(obj);
+  else { const i = products.findIndex(p => p.productId===newId); if(i!==-1) products[i]=obj; }
+  closeModal('productModal');
   await saveProductsToSheet();
-  renderProductsCard(); renderAssignmentsList(); renderLogTab();
+  renderProducts();
+  renderAssignments();
   showToast(isNew ? '✅ Product added' : '✅ Updated');
 }
 
-// ======================== SHEET SYNC ========================
-async function saveProductsToSheet(){
-  if(!spreadsheetId) return false;
-  try{
-    await gapi.client.sheets.spreadsheets.values.clear({spreadsheetId, range:`'${PRODUCTS_SHEET}'!A2:E`});
-    if(products.length){
-      const rows=products.map(p=>[p.productId,p.brandId,p.product,p.useFor,p.status]);
-      await gapi.client.sheets.spreadsheets.values.update({spreadsheetId, range:`'${PRODUCTS_SHEET}'!A2`, valueInputOption:'RAW', resource:{values:rows}});
+// ── Toggle product status inline ───────────────────────────
+async function toggleProductStatus(productId) {
+  const p = products.find(p => p.productId===productId);
+  if (!p) return;
+  p.status = p.status==='Active' ? 'Inactive' : 'Active';
+  await saveProductsToSheet();
+  renderProducts();
+  if (currentBrandId) openBrandModal(currentBrandId);
+  renderAssignments();
+  showToast(`Product ${p.status.toLowerCase()}`);
+}
+
+// ── Assignment modal ───────────────────────────────────────
+function openAssignmentModal(id = null) {
+  const isEdit = !!id;
+  document.getElementById('assignmentModalTitle').textContent = isEdit ? '✏️ Edit Step' : '➕ Add Routine Step';
+  document.getElementById('editAssignmentId').value = id || '';
+
+  const brandFilter   = document.getElementById('assignmentBrandFilter');
+  brandFilter.innerHTML = '<option value="">All Brands</option>' +
+    BRANDS.map(b => `<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('');
+
+  const refreshProducts = () => {
+    const sel = document.getElementById('assignmentProductId');
+    let filtered = products.filter(p => p.status==='Active');
+    if (brandFilter.value) filtered = filtered.filter(p => p.brandId===brandFilter.value);
+    sel.innerHTML = filtered.map(p => `<option value="${p.productId}">${escapeHtml(p.product)}</option>`).join('');
+  };
+  brandFilter.onchange = refreshProducts;
+
+  if (isEdit) {
+    const a = assignments.find(a => a.assignmentId===id);
+    if (a) {
+      const p = products.find(p => p.productId===a.productId);
+      if (p) brandFilter.value = p.brandId;
+      refreshProducts();
+      document.getElementById('assignmentProductId').value = a.productId;
+      document.getElementById('assignmentPhase').value = a.phase;
+      document.getElementById('assignmentStep').value  = a.step;
+      renderDayCheckboxes('daysCheckboxes', a.days);
     }
-    saveProductsLocal(); return true;
-  }catch(e){ console.error(e); return false; }
+  } else {
+    refreshProducts();
+    document.getElementById('assignmentPhase').value = 'Morning';
+    const maxStep = assignments.filter(a => a.phase==='Morning').reduce((m,a) => Math.max(m,a.step), 0);
+    document.getElementById('assignmentStep').value = maxStep + 1;
+    renderDayCheckboxes('daysCheckboxes','Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday');
+  }
+  openModal('assignmentModal');
 }
-async function saveAssignmentsToSheet(){
-  if(!spreadsheetId) return false;
-  try{
-    await gapi.client.sheets.spreadsheets.values.clear({spreadsheetId, range:`'${ROUTINE_SHEET}'!A2:E`});
-    if(assignments.length){
-      const rows=assignments.map(a=>[a.assignmentId,a.productId,a.phase,a.step,a.days]);
-      await gapi.client.sheets.spreadsheets.values.update({spreadsheetId, range:`'${ROUTINE_SHEET}'!A2`, valueInputOption:'RAW', resource:{values:rows}});
-    }
-    saveAssignmentsLocal(); return true;
-  }catch(e){ console.error(e); return false; }
+
+async function saveAssignment() {
+  const id        = document.getElementById('editAssignmentId').value;
+  const productId = document.getElementById('assignmentProductId').value;
+  const phase     = document.getElementById('assignmentPhase').value;
+  const step      = parseInt(document.getElementById('assignmentStep').value);
+  const days      = getSelectedDays('daysCheckboxes');
+  if (!productId || !phase || isNaN(step)) { showToast('All fields required', 'error'); return; }
+  if (!days) { showToast('Please select at least one day', 'error'); return; }
+
+  const isNew = !id;
+  const newId = id || generateAssignmentId();
+  const obj = { assignmentId:newId, productId, phase, step, days };
+  if (isNew) assignments.push(obj);
+  else { const i = assignments.findIndex(a => a.assignmentId===newId); if(i!==-1) assignments[i]=obj; }
+
+  // Renumber steps for this phase
+  const phaseSteps = assignments.filter(a => a.phase===phase).sort((x,y) => x.step-y.step);
+  phaseSteps.forEach((a,i) => { a.step = i+1; });
+
+  closeModal('assignmentModal');
+  await saveAssignmentsToSheet();
+  renderAssignments();
+  showToast(isNew ? '✅ Step added' : '✅ Updated');
 }
-async function syncAll(){
-  const btn=document.getElementById('syncBtn'); btn.classList.add('spinning');
-  try{ await loadProducts(); await loadAssignments(); await loadLogs(); renderProductsCard(); renderAssignmentsList(); renderLogTab(); showToast('✅ Synced'); }
-  catch(e){ showToast('❌ Sync failed','error'); } finally{ btn.classList.remove('spinning'); }
+
+// ── Action sheet ───────────────────────────────────────────
+function openActionSheet(type, id) {
+  actionSheetTarget = { type, id };
+  let title = '';
+  if (type==='product') {
+    const p = products.find(p => p.productId===id);
+    title = p ? p.product : 'Product';
+  } else {
+    const a = assignments.find(a => a.assignmentId===id);
+    if (a) { const p = products.find(p => p.productId===a.productId); title = p ? `${p.product} · ${a.phase} step ${a.step}` : 'Step'; }
+  }
+  document.getElementById('sheetTitle').textContent = title;
+  openModal('actionSheet');
 }
-async function ensureSheets(){
-  try{
-    const meta=await gapi.client.sheets.spreadsheets.get({spreadsheetId});
-    const existing=meta.result.sheets.map(s=>s.properties.title);
-    const required=[PRODUCTS_SHEET,ROUTINE_SHEET,ROUTINE_LOG_SHEET];
-    for(const sheet of required){
-      if(!existing.includes(sheet)){
-        await gapi.client.sheets.spreadsheets.batchUpdate({spreadsheetId, resource:{requests:[{addSheet:{properties:{title:sheet}}}]}});
-        let headers=[];
-        if(sheet===PRODUCTS_SHEET) headers=[['ProductID','BrandID','Product','Use For','Status']];
-        else if(sheet===ROUTINE_SHEET) headers=[['AssignmentID','ProductID','Phase','Step','Days']];
-        else if(sheet===ROUTINE_LOG_SHEET) headers=[['Date','ProductID','Phase','Step','Product','Timestamp','Notes']];
-        if(headers.length) await gapi.client.sheets.spreadsheets.values.update({spreadsheetId, range:`'${sheet}'!A1:${String.fromCharCode(64+headers[0].length)}1`, valueInputOption:'RAW', resource:{values:headers}});
-      } else if (sheet === ROUTINE_SHEET) {
-        // Ensure Days column exists (migration for existing sheets)
-        const headerRes = await gapi.client.sheets.spreadsheets.values.get({spreadsheetId, range:`'${ROUTINE_SHEET}'!A1:E1`});
-        const headers = headerRes.result.values?.[0] || [];
-        if (headers.length < 5) {
-          await gapi.client.sheets.spreadsheets.values.update({spreadsheetId, range:`'${ROUTINE_SHEET}'!E1`, valueInputOption:'RAW', resource:{values:[['Days']]}});
-        }
+
+async function sheetEdit() {
+  if (!actionSheetTarget) return;
+  const { type, id } = actionSheetTarget;
+  closeModal('actionSheet');
+  if (type==='product') openProductModal(id); else openAssignmentModal(id);
+}
+
+async function sheetDelete() {
+  if (!actionSheetTarget) return;
+  const { type, id } = actionSheetTarget;
+  closeModal('actionSheet');
+  if (type==='product') {
+    if (assignments.some(a => a.productId===id) && !confirm('This product has routine steps. Delete anyway?')) return;
+    assignments = assignments.filter(a => a.productId!==id);
+    products    = products.filter(p => p.productId!==id);
+    await saveProductsToSheet();
+    await saveAssignmentsToSheet();
+    renderProducts(); renderAssignments();
+    showToast('🗑️ Product deleted');
+  } else {
+    assignments = assignments.filter(a => a.assignmentId!==id);
+    await saveAssignmentsToSheet();
+    renderAssignments();
+    showToast('🗑️ Step deleted');
+  }
+}
+
+// ── Sync ───────────────────────────────────────────────────
+async function syncAll() {
+  const btn = document.getElementById('syncBtn');
+  btn.classList.add('spinning');
+  try {
+    await loadProducts(); await loadAssignments();
+    renderProducts(); renderAssignments();
+    showToast('✅ Synced');
+  } catch(e) { showToast('❌ Sync failed','error'); }
+  btn.classList.remove('spinning');
+}
+
+async function ensureSheets() {
+  try {
+    const meta = await gapi.client.sheets.spreadsheets.get({ spreadsheetId });
+    const existing = meta.result.sheets.map(s => s.properties.title);
+    for (const [name, headers] of [
+      [PRODUCTS_SHEET,    ['ProductID','BrandID','Product','Use For','Status']],
+      [ROUTINE_SHEET,     ['AssignmentID','ProductID','Phase','Step','Days']],
+      [ROUTINE_LOG_SHEET, ['Date','ProductID','Phase','Step','Product','Timestamp','Notes']]
+    ]) {
+      if (!existing.includes(name)) {
+        await gapi.client.sheets.spreadsheets.batchUpdate({ spreadsheetId, resource: { requests:[{ addSheet:{properties:{title:name}} }] } });
+        await gapi.client.sheets.spreadsheets.values.update({ spreadsheetId, range:`'${name}'!A1:${String.fromCharCode(64+headers.length)}1`, valueInputOption:'RAW', resource:{values:[headers]} });
       }
     }
-  }catch(e){ console.warn(e); }
+  } catch(e) { console.warn(e); }
 }
 
-// ======================== ACTION SHEET ========================
-function openActionSheet(type,id){
-  if(currentBrandModalBrandId!==null) closeBrandProductsModal();
-  actionSheetTarget={type,id}; let title='';
-  if(type==='product'){ const p=products.find(p=>p.productId===id); title=p?p.product:'Product'; }
-  else{ const a=assignments.find(a=>a.assignmentId===id); if(a){ const p=products.find(p=>p.productId===a.productId); title=p?`${p.product} · ${a.phase} step ${a.step}`:'Assignment'; } }
-  document.getElementById('sheetTitle').textContent=title; document.getElementById('actionSheet').classList.add('open');
-}
-function closeActionSheet(){ document.getElementById('actionSheet').classList.remove('open'); actionSheetTarget=null; }
-function sheetEdit(){ if(!actionSheetTarget) return; const {type,id}=actionSheetTarget; closeActionSheet(); if(type==='product') openProductModal(id); else openAssignmentModal(id); }
-async function sheetDelete(){
-  if(!actionSheetTarget) return; const {type,id}=actionSheetTarget; closeActionSheet();
-  if(type==='product'){
-    if(assignments.some(a=>a.productId===id) && !confirm('This product has assignments. Deleting it will also delete its assignments. Continue?')) return;
-    assignments=assignments.filter(a=>a.productId!==id); products=products.filter(p=>p.productId!==id);
-    await saveProductsToSheet(); await saveAssignmentsToSheet();
-    renderProductsCard(); renderAssignmentsList(); renderLogTab(); showToast('🗑️ Product deleted');
-  } else {
-    assignments=assignments.filter(a=>a.assignmentId!==id); await saveAssignmentsToSheet();
-    renderAssignmentsList(); renderLogTab(); showToast('🗑️ Assignment deleted');
-  }
-}
+// ── Wire events & init ─────────────────────────────────────
+document.getElementById('addStepBtn').addEventListener('click', () => openAssignmentModal());
+document.getElementById('addProductBtn').addEventListener('click', () => openProductModal());
+document.getElementById('cancelProductBtn').addEventListener('click', () => closeModal('productModal'));
+document.getElementById('saveProductBtn').addEventListener('click', saveProduct);
+document.getElementById('cancelAssignmentBtn').addEventListener('click', () => closeModal('assignmentModal'));
+document.getElementById('saveAssignmentBtn').addEventListener('click', saveAssignment);
+document.getElementById('closeBrandBtn').addEventListener('click', () => { closeModal('brandModal'); currentBrandId = null; });
+document.getElementById('syncBtn').addEventListener('click', syncAll);
+document.getElementById('sheetEditBtn').addEventListener('click', sheetEdit);
+document.getElementById('sheetDeleteBtn').addEventListener('click', sheetDelete);
 
-// ======================== INIT ========================
-async function initPage(){
-  const timeoutId=setTimeout(()=>{ const ov=document.getElementById('loadingOverlay'); if(ov && ov.style.display!=='none'){ ov.style.display='none'; showToast('⚠️ Connection slow. Please refresh.','error'); } },8000);
-  try{
-    await initPageAuth({
-      onLoadLocal:(email,sheetId)=>{ currentUserEmail=email; spreadsheetId=sheetId; if(!spreadsheetId){ showToast('⚠️ No spreadsheet found. Redirecting...','error'); setTimeout(()=>window.location.href='Home.html',2000); return; } loadProductsLocal(); loadAssignmentsLocal(); renderDate(); },
-      onReady:async (sheetId,email,token)=>{ clearTimeout(timeoutId); spreadsheetId=sheetId; currentUserEmail=email; if(!spreadsheetId){ showToast('❌ Spreadsheet ID missing','error'); setTimeout(()=>window.location.href='Home.html',1500); return; } await ensureSheets(); await loadProducts(); await loadAssignments(); await loadLogs(); renderDate(); renderProductsCard(); renderAssignmentsList(); renderLogTab(); document.getElementById('loadingOverlay').style.display='none'; }
-    });
-  } catch(err){ console.error(err); clearTimeout(timeoutId); document.getElementById('loadingOverlay').style.display='none'; showToast('❌ Failed to load. Please sign in again.','error'); setTimeout(()=>window.location.href='Home.html',2000); }
-}
-document.getElementById('actionSheet').addEventListener('click',(e)=>{ if(e.target===e.currentTarget) closeActionSheet(); });
-document.getElementById('brandProductsModal').addEventListener('click',(e)=>{ if(e.target===e.currentTarget) closeBrandProductsModal(); });
-document.getElementById('productModal').addEventListener('click',(e)=>{ if(e.target===e.currentTarget) closeProductModal(); });
-document.getElementById('assignmentModal').addEventListener('click',(e)=>{ if(e.target===e.currentTarget) closeAssignmentModal(); });
-renderBottomNav('routine');
-initPage();
-
-// Toggle function for product status in the modal
-function toggleProductStatusUI(event) {
+// Status toggle
+document.getElementById('productStatusToggle').addEventListener('click', () => {
   const toggle = document.getElementById('productStatusToggle');
-  const input = document.getElementById('productStatusInput');
-  if (toggle.classList.contains('active')) {
-    toggle.classList.remove('active'); toggle.classList.add('inactive');
-    input.value = 'Inactive';
-  } else {
-    toggle.classList.remove('inactive'); toggle.classList.add('active');
-    input.value = 'Active';
+  const input  = document.getElementById('productStatusInput');
+  const isActive = toggle.classList.contains('active');
+  toggle.classList.toggle('active', !isActive);
+  toggle.classList.toggle('inactive', isActive);
+  input.value = isActive ? 'Inactive' : 'Active';
+});
+
+// Delegated click handlers
+document.addEventListener('click', e => {
+  // Brand list row
+  const brandRow = e.target.closest('[data-brand]');
+  if (brandRow && !e.target.closest('.more-btn') && !e.target.closest('.status-toggle')) {
+    openBrandModal(brandRow.dataset.brand); return;
+  }
+  // Inline product status toggle
+  const toggleEl = e.target.closest('[data-toggle-product]');
+  if (toggleEl) { toggleProductStatus(toggleEl.dataset.toggleProduct); return; }
+  // More (⋮) buttons
+  const moreBtn = e.target.closest('[data-action-type]');
+  if (moreBtn && moreBtn.classList.contains('more-btn')) {
+    e.stopPropagation();
+    openActionSheet(moreBtn.dataset.actionType, moreBtn.dataset.actionId);
+  }
+});
+
+// Close modals on backdrop click
+['productModal','assignmentModal','brandModal'].forEach(id => {
+  document.getElementById(id).addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(id); });
+});
+document.getElementById('actionSheet').addEventListener('click', e => { if(e.target===e.currentTarget) closeModal('actionSheet'); });
+
+renderBottomNav('routine');
+
+async function initPage() {
+  const timeout = setTimeout(() => {
+    document.getElementById('loadingOverlay').style.display = 'none';
+    showToast('⚠️ Connection slow. Please refresh.', 'error');
+  }, 8000);
+  try {
+    await initPageAuth({
+      onLoadLocal: (email, sheetId) => {
+        currentUserEmail = email; spreadsheetId = sheetId;
+        if (!spreadsheetId) { showToast('⚠️ No sheet found. Redirecting…','error'); setTimeout(()=>window.location.href='Home.html',2000); return; }
+        loadLocal(); renderProducts(); renderAssignments();
+      },
+      onReady: async (sheetId, email) => {
+        clearTimeout(timeout);
+        spreadsheetId = sheetId; currentUserEmail = email;
+        await ensureSheets();
+        await loadProducts(); await loadAssignments();
+        renderProducts(); renderAssignments();
+        document.getElementById('loadingOverlay').style.display = 'none';
+      }
+    });
+  } catch(err) {
+    console.error(err);
+    clearTimeout(timeout);
+    document.getElementById('loadingOverlay').style.display = 'none';
+    showToast('❌ Failed to load. Please sign in again.','error');
+    setTimeout(()=>window.location.href='Home.html',2000);
   }
 }
 
-// Build use-for checkboxes
-function renderUseForCheckboxes(selected) {
-  if (!selected) selected = '';
-  const selectedArr = selected.split(',').map(s => s.trim());
-  const container = document.getElementById('useForCheckboxes');
-  container.innerHTML = USE_FOR_OPTIONS.map(option => {
-    const checked = selectedArr.includes(option) ? 'checked' : '';
-    return `<label style="display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text); cursor:pointer; line-height:1.4; padding:2px 0;">
-      <input type="checkbox" value="${escapeHtml(option)}" ${checked} style="margin:0; flex-shrink:0;">
-      <span>${escapeHtml(option)}</span>
-    </label>`;
-  }).join('');
-}
-
-// Get selected use-for options as comma-separated string
-function getSelectedUseFor() {
-  return Array.from(document.querySelectorAll('#useForCheckboxes input:checked'))
-              .map(cb => cb.value).join(', ');
-}  
+initPage();
 </script>
 </body>
 </html>

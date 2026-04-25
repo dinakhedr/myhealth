@@ -4,8 +4,7 @@
   <meta charset="UTF-8">
   <link rel="manifest" href="../manifest.json">
   <link rel="apple-touch-icon" sizes="180x180" href="../images/icon.png">
-  <link rel="icon" type="image/png" sizes="180x180" href="../images/icon.png">
-  <link rel="shortcut icon" href="../images/icon.png">
+  <link rel="icon" type="image/png" href="../images/icon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
@@ -19,88 +18,6 @@
   <script src="../assets/auth.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js"></script>
-  <style>
-    /* Health Tracker specific overrides */
-    .kpi-card.skincare-card { background: linear-gradient(135deg, #f472b6 0%, #ec4899 100%); }
-    .kpi-card.supplements-card { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); }
-    .quick-actions {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-    .quick-btn {
-      flex: 1;
-      padding: 14px;
-      border: none;
-      border-radius: var(--radius-md);
-      font-family: 'Sora', sans-serif;
-      font-size: 14px;
-      font-weight: 700;
-      color: #fff;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      transition: transform 0.15s, opacity 0.15s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-    .quick-btn:active { transform: scale(0.97); }
-    .quick-btn.routine { background: linear-gradient(135deg, #5b5ef4 0%, #8b5cf6 100%); }
-    .quick-btn.supplements { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
-
-    .preview-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .preview-item:last-child { border-bottom: none; }
-    .preview-status {
-      width: 22px;
-      height: 22px;
-      border-radius: 7px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      flex-shrink: 0;
-    }
-    .preview-status.done {
-      background: var(--success);
-      color: #fff;
-    }
-    .preview-status.pending {
-      background: var(--surface-2);
-      color: var(--text-3);
-    }
-    .preview-info {
-      flex: 1;
-      font-size: 13px;
-      color: var(--text);
-    }
-    .preview-time {
-      font-size: 11px;
-      color: var(--text-3);
-      margin-top: 2px;
-    }
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-    .section-title {
-      font-family: 'Sora', sans-serif;
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-  </style>
 </head>
 <body>
 
@@ -152,10 +69,10 @@
   </div>
 </div>
 
-<!-- Main App Dashboard -->
+<!-- Main App -->
 <div class="container" id="mainApp" style="display:none">
   <div class="header">
-    <div class="header-left">
+    <div>
       <h1>🧴 Health Tracker</h1>
       <p id="userEmailDisplay"></p>
     </div>
@@ -165,7 +82,14 @@
     </div>
   </div>
 
-  <!-- Progress Cards -->
+  <!-- Date navigation -->
+  <div class="date-nav">
+    <button class="hdr-icon-btn" id="prevDateBtn">←</button>
+    <h2 id="dateDisplay"></h2>
+    <button class="hdr-icon-btn" id="nextDateBtn">→</button>
+  </div>
+
+  <!-- KPI cards -->
   <div class="kpi-row">
     <div class="kpi-card skincare-card">
       <div class="kpi-label">🧴 Skincare</div>
@@ -179,42 +103,34 @@
     </div>
   </div>
 
-  <!-- Quick Actions -->
-  <div class="quick-actions">
-    <button class="quick-btn skincare" onclick="window.location.href='Routine.html'">🧴 Log Routine</button>
-    <button class="quick-btn supplements" onclick="window.location.href='Supplements.html'">💊 Log Supplements</button>
-  </div>
+  <!-- Overall progress bar -->
+  <div class="progress-bar"><div class="progress-fill" id="overallProgressFill"></div></div>
 
-  <!-- Morning Routine Preview -->
+  <!-- Morning Routine -->
   <div class="card">
     <div class="section-header">
-      <div class="section-title">
-        <span class="card-title-icon">🌅</span> Morning Routine
-      </div>
-      <span style="font-size:12px; color: var(--text-2);" id="morningProgressText">0/0</span>
+      <div class="section-title"><span class="card-title-icon">🌅</span> Morning Routine</div>
+      <span style="font-size:12px;color:var(--text-2)" id="morningProgressText">0/0</span>
     </div>
-    <div id="morningPreviewList"></div>
+    <div id="morningList"></div>
   </div>
 
-  <!-- Evening Routine Preview -->
+  <!-- Evening Routine -->
   <div class="card">
     <div class="section-header">
-      <div class="section-title">
-        <span class="card-title-icon">🌙</span> Evening Routine
-      </div>
-      <span style="font-size:12px; color: var(--text-2);" id="eveningProgressText">0/0</span>
+      <div class="section-title"><span class="card-title-icon">🌙</span> Evening Routine</div>
+      <span style="font-size:12px;color:var(--text-2)" id="eveningProgressText">0/0</span>
     </div>
-    <div id="eveningPreviewList"></div>
+    <div id="eveningList"></div>
   </div>
 
-  <!-- Supplements Preview -->
+  <!-- Supplements -->
   <div class="card">
     <div class="section-header">
-      <div class="section-title">
-        <span class="card-title-icon">💊</span> Today's Supplements
-      </div>
+      <div class="section-title"><span class="card-title-icon">💊</span> Supplements</div>
+      <span style="font-size:12px;color:var(--text-2)" id="suppProgressText">0/0</span>
     </div>
-    <div id="supplementsPreviewList"></div>
+    <div id="suppList"></div>
   </div>
 
   <div class="sync-strip" id="syncStatus">✅ Synced to Google Drive</div>
@@ -224,306 +140,310 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ── State ─────────────────────────────────────────────────
+// ── State ──────────────────────────────────────────────────
 let currentUserEmail = null;
 let currentAccessToken = null;
 let spreadsheetId = null;
-let products = [];           // from Products sheet
-let assignments = [];        // from Routine sheet (assignments)
-let logs = [];               // from Routine Log sheet
+let products = [];
+let assignments = [];
+let routineLogs = [];
 let supplementsList = [];
-let todaySuppLog = new Map(); // key: "TimeSlot|Supplement" -> true
+let supplementAssignments = [];
+let supplementLogs = [];
 let currentDate = new Date();
 
-// ── Local storage ─────────────────────────────────────────
-function saveLocalData() {
+// ── Local cache ────────────────────────────────────────────
+function saveLocal() {
   if (!currentUserEmail) return;
-  localStorage.setItem(`products_${currentUserEmail}`, JSON.stringify(products));
-  localStorage.setItem(`assignments_${currentUserEmail}`, JSON.stringify(assignments));
-  localStorage.setItem(`supplements_${currentUserEmail}`, JSON.stringify(supplementsList));
+  localStorage.setItem(`products_${currentUserEmail}`,      JSON.stringify(products));
+  localStorage.setItem(`assignments_${currentUserEmail}`,   JSON.stringify(assignments));
+  localStorage.setItem(`supplements_${currentUserEmail}`,   JSON.stringify(supplementsList));
+  localStorage.setItem(`suppAssignments_${currentUserEmail}`, JSON.stringify(supplementAssignments));
 }
-function loadLocalData() {
+
+function loadLocal() {
   if (!currentUserEmail) return;
-  const p = localStorage.getItem(`products_${currentUserEmail}`);
-  if (p) products = JSON.parse(p);
-  const a = localStorage.getItem(`assignments_${currentUserEmail}`);
-  if (a) assignments = JSON.parse(a);
-  const s = localStorage.getItem(`supplements_${currentUserEmail}`);
-  if (s) supplementsList = JSON.parse(s);
+  const p  = localStorage.getItem(`products_${currentUserEmail}`);      if (p)  products             = JSON.parse(p);
+  const a  = localStorage.getItem(`assignments_${currentUserEmail}`);   if (a)  assignments           = JSON.parse(a);
+  const s  = localStorage.getItem(`supplements_${currentUserEmail}`);   if (s)  supplementsList       = JSON.parse(s);
+  const sa = localStorage.getItem(`suppAssignments_${currentUserEmail}`); if (sa) supplementAssignments = JSON.parse(sa);
 }
 
-// ── Sync strip ────────────────────────────────────────────
-function setSyncStrip(msg, warn) {
-  const el = document.getElementById('syncStatus');
-  if (el) { el.textContent = msg; el.className = warn ? 'sync-strip warn' : 'sync-strip'; }
+// ── Date helpers ───────────────────────────────────────────
+function renderDate() {
+  document.getElementById('dateDisplay').textContent = formatDateForDisplay(currentDate);
 }
 
-// ── Ensure all required sheets exist (create if missing) ──
-async function ensureAllSheetsExist() {
-  if (!spreadsheetId) return;
-  try {
-    const meta = await gapi.client.sheets.spreadsheets.get({ spreadsheetId });
-    const existingSheets = meta.result.sheets.map(s => s.properties.title);
-    
-    const requiredSheets = [
-      { name: PRODUCTS_SHEET, headers: ['ProductID','BrandID','Product','Use For','Status'] },
-      { name: ROUTINE_SHEET, headers: ['AssignmentID','ProductID','Phase','Step','Days'] },
-      { name: ROUTINE_LOG_SHEET, headers: ['Date','ProductID','Phase','Step','Product','Timestamp','Notes'] },
-      { name: SUPPLEMENTS_SHEET, headers: ['SupplementID','Name','Use For','Status'] },
-      { name: SUPPLEMENT_ROUTINE_SHEET, headers: ['AssignmentID','SupplementID','TimeSlot','Days','Notes'] },
-      { name: SUPPLEMENTS_LOG_SHEET, headers: ['Date','TimeSlot','Supplement','Taken','Notes','Timestamp','SupplementID'] }
-    ];
-    
-    const missing = requiredSheets.filter(s => !existingSheets.includes(s.name));
-    if (missing.length === 0) return;
-    
-    const requests = missing.map(sheet => ({ addSheet: { properties: { title: sheet.name } } }));
-    await gapi.client.sheets.spreadsheets.batchUpdate({ spreadsheetId, resource: { requests } });
-    
-    for (const sheet of missing) {
-      const range = `'${sheet.name}'!A1:${String.fromCharCode(64 + sheet.headers.length)}1`;
-      await gapi.client.sheets.spreadsheets.values.update({
-        spreadsheetId, range,
-        valueInputOption: 'RAW',
-        resource: { values: [sheet.headers] }
-      });
-    }
-    console.log('Created missing sheets:', missing.map(s => s.name));
-  } catch (e) { console.warn('ensureAllSheetsExist error', e); }
+function changeDate(delta) {
+  currentDate.setDate(currentDate.getDate() + delta);
+  renderDate();
+  loadAndRender();
 }
 
-// ── Load products and assignments ─────────────────────────
+// ── Sheet loaders ──────────────────────────────────────────
 async function loadProducts() {
-  if (!spreadsheetId) return;
-  try {
-    const res = await gapi.client.sheets.spreadsheets.values.get({
-      spreadsheetId, range: `'${PRODUCTS_SHEET}'!A2:E`
-    });
-    const rows = res.result.values || [];
-    products = rows.map(r => ({
-      productId: r[0] || '',
-      brandId: r[1] || '',
-      product: r[2] || '',
-      useFor: r[3] || '',
-      status: r[4] || 'Active'
-    })).filter(p => p.productId);
-    saveLocalData();
-  } catch (e) { console.error('loadProducts', e); }
+  const res = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId, range: `'${PRODUCTS_SHEET}'!A2:E` });
+  products = (res.result.values || []).map(r => ({
+    productId: r[0]||'', brandId: r[1]||'', product: r[2]||'', useFor: r[3]||'', status: r[4]||'Active'
+  })).filter(p => p.productId);
 }
 
 async function loadAssignments() {
-  if (!spreadsheetId) return;
-  try {
-    const res = await gapi.client.sheets.spreadsheets.values.get({
-      spreadsheetId, range: `'${ROUTINE_SHEET}'!A2:E`
-    });
-    const rows = res.result.values || [];
-    assignments = rows.map(r => ({
-      assignmentId: r[0] || '',
-      productId: r[1] || '',
-      phase: r[2] || '',
-      step: parseInt(r[3]) || 0,
-      days: r[4] || ''
-    })).filter(a => a.assignmentId);
-    saveLocalData();
-  } catch (e) { console.error('loadAssignments', e); }
+  const res = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId, range: `'${ROUTINE_SHEET}'!A2:E` });
+  assignments = (res.result.values || []).map(r => ({
+    assignmentId: r[0]||'', productId: r[1]||'', phase: r[2]||'', step: Math.round(Number(r[3]))||0, days: r[4]||''
+  })).filter(a => a.assignmentId);
 }
 
-async function loadLogs() {
-  if (!spreadsheetId) return;
-  const dateStr = currentDate.toISOString().split('T')[0];
-  try {
-    const res = await gapi.client.sheets.spreadsheets.values.get({
-      spreadsheetId, range: `'${ROUTINE_LOG_SHEET}'!A2:G`
-    });
-    const rows = res.result.values || [];
-    logs = rows.map(r => ({
-      date: r[0] || '',
-      productId: r[1] || '',
-      phase: r[2] || '',
-      step: parseInt(r[3]) || 0,
-      productName: r[4] || '',
-      timestamp: r[5] || '',
-      notes: r[6] || ''
-    }));
-  } catch (e) { console.error('loadLogs', e); }
+async function loadRoutineLogs() {
+  const res = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId, range: `'${ROUTINE_LOG_SHEET}'!A2:G` });
+  routineLogs = (res.result.values || []).map(r => ({
+    date: r[0]||'', productId: r[1]||'', phase: r[2]||'', step: Math.round(Number(r[3]))||0, productName: r[4]||''
+  }));
 }
 
-// ── Load supplements list from sheet ──────────────────────
 async function loadSupplementsList() {
-  if (!spreadsheetId) return;
-  try {
-    const res = await gapi.client.sheets.spreadsheets.values.get({
-      spreadsheetId, range: `'${SUPPLEMENTS_SHEET}'!A2:D`
-    });
-    const rows = res.result.values || [];
-    supplementsList = rows.map(r => ({
-      supplementId: r[0] || '',
-      name: r[1] || '',
-      useFor: r[2] || '',
-      status: r[3] || 'Active'
-    })).filter(s => s.supplementId);
-    saveLocalData();
-  } catch (e) { console.error('loadSupplementsList', e); }
+  const res = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId, range: `'${SUPPLEMENTS_SHEET}'!A2:D` });
+  supplementsList = (res.result.values || []).map(r => ({
+    supplementId: r[0]||'', name: r[1]||'', useFor: r[2]||'', status: r[3]||'Active'
+  })).filter(s => s.supplementId);
 }
 
-// ── Load today's logs (routine + supplements) ─────────────
-async function loadTodayLogs() {
-  if (!spreadsheetId) return;
-  const dateStr = currentDate.toISOString().split('T')[0];
-  try {
-    // Routine logs
-    const rRes = await gapi.client.sheets.spreadsheets.values.get({
-      spreadsheetId, range: `'${ROUTINE_LOG_SHEET}'!A2:G`
-    });
-    const rRows = rRes.result.values || [];
-    logs = rRows.map(r => ({
-      date: r[0] || '',
-      productId: r[1] || '',
-      phase: r[2] || '',
-      step: parseInt(r[3]) || 0,
-      productName: r[4] || ''
-    }));
-
-    // Supplements logs
-    const sRes = await gapi.client.sheets.spreadsheets.values.get({
-      spreadsheetId, range: `'${SUPPLEMENTS_LOG_SHEET}'!A2:G`
-    });
-    const sRows = sRes.result.values || [];
-    todaySuppLog.clear();
-    sRows.forEach(r => {
-      if (r[0] === dateStr && r[3] === 'TRUE') {
-        todaySuppLog.set(r[6] || '', true); // key by supplementId (column G)
-      }
-    });
-  } catch (e) { console.error('loadTodayLogs', e); }
+async function loadSupplementAssignments() {
+  const res = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId, range: `'${SUPPLEMENT_ROUTINE_SHEET}'!A2:E` });
+  supplementAssignments = (res.result.values || []).map(r => ({
+    assignmentId: r[0]||'', supplementId: r[1]||'', timeSlot: r[2]||'', days: r[3]||'', notes: r[4]||''
+  })).filter(a => a.assignmentId);
 }
 
-// ── Render dashboard ───────────────────────────────────────
-function renderDashboard() {
-  // Build product map
-  const productMap = new Map();
-  products.forEach(p => productMap.set(p.productId, p));
-  
-  // Get active assignments (only for active products)
-  const activeAssignments = assignments.filter(a => {
-    const product = productMap.get(a.productId);
-    return product && product.status === 'Active';
+async function loadSupplementLogs() {
+  const res = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId, range: `'${SUPPLEMENTS_LOG_SHEET}'!A2:G` });
+  supplementLogs = (res.result.values || []).map(r => ({
+    date: r[0]||'', timeSlot: r[1]||'', supplementId: r[2]||'', supplement: r[3]||'', notes: r[4]||'', timestamp: r[5]||''
+  }));
+}
+
+// ── Render ─────────────────────────────────────────────────
+function render() {
+  const dateStr  = formatDateISO(currentDate);
+  const todayDay = getTodayWeekday(currentDate);
+  const productMap = new Map(products.map(p => [p.productId, p]));
+  const suppMap    = new Map(supplementsList.map(s => [s.supplementId, s]));
+
+  // Today's completed routine steps
+  const doneRoutine = new Set(
+    routineLogs.filter(l => l.date === dateStr).map(l => `${l.phase}|${l.step}`)
+  );
+
+  // Today's taken supplements
+  const doneSupp = new Set(
+    supplementLogs.filter(l => l.date === dateStr).map(l => l.supplementId)
+  );
+
+  // Active assignments scheduled for today
+  const todayAssignments = assignments.filter(a => {
+    const p = productMap.get(a.productId);
+    return p && p.status === 'Active' && a.days.split(',').map(d => d.trim()).includes(todayDay);
   });
-  
-  // Filter by current day for routine preview
-  const today = new Date(currentDate);
-  const todayDay = WEEKDAYS[today.getDay()];
-  const filteredByDay = activeAssignments.filter(a => a.days && a.days.split(',').includes(todayDay));
-  
-  const morningSteps = filteredByDay.filter(a => a.phase === 'Morning').sort((a,b) => a.step - b.step);
-  const eveningSteps = filteredByDay.filter(a => a.phase === 'Evening').sort((a,b) => a.step - b.step);
-  const totalRoutine = morningSteps.length + eveningSteps.length;
-  
-  const dateStr = currentDate.toISOString().split('T')[0];
-  const todaysLogKeys = new Set(logs.filter(l => l.date === dateStr).map(l => `${l.phase}|${l.step}`));
-  
-  let completedRoutine = 0;
-  filteredByDay.forEach(a => {
-    if (todaysLogKeys.has(`${a.phase}|${a.step}`)) completedRoutine++;
-  });
-  
+
+  const morning = todayAssignments.filter(a => a.phase === 'Morning').sort((x,y) => x.step - y.step);
+  const evening = todayAssignments.filter(a => a.phase === 'Evening').sort((x,y) => x.step - y.step);
+
+  // Active supplement assignments for today
+  const todaySuppAssignments = supplementAssignments.filter(a => {
+    const s = suppMap.get(a.supplementId);
+    return s && s.status === 'Active' && a.days.split(',').map(d => d.trim()).includes(todayDay);
+  }).sort((x,y) => getTimeValue(x.timeSlot) - getTimeValue(y.timeSlot));
+
+  // KPI counts
+  const totalRoutine    = morning.length + evening.length;
+  const completedRoutine = [...morning, ...evening].filter(a => doneRoutine.has(`${a.phase}|${a.step}`)).length;
+  const totalSupp       = todaySuppAssignments.length;
+  const completedSupp   = todaySuppAssignments.filter(a => doneSupp.has(a.supplementId)).length;
+
   document.getElementById('skincareProgress').textContent = `${completedRoutine}/${totalRoutine}`;
-  const pct = totalRoutine ? Math.round(completedRoutine / totalRoutine * 100) : 0;
-  document.getElementById('skincareStreak').innerHTML = `<span class="trend-badge">${pct}% complete</span>`;
+  document.getElementById('skincareStreak').innerHTML = totalRoutine
+    ? `<span class="trend-badge">${Math.round(completedRoutine/totalRoutine*100)}% done</span>` : '';
 
-  // Supplements progress
-  const activeSupplements = supplementsList.filter(s => s.status === 'Active');
-  const totalSupp = activeSupplements.length;
-  let takenSupp = 0;
-  activeSupplements.forEach(s => { if (todaySuppLog.has(s.supplementId)) takenSupp++; });
-  document.getElementById('supplementsProgress').textContent = `${takenSupp}/${totalSupp}`;
-  const suppPct = totalSupp ? Math.round(takenSupp / totalSupp * 100) : 0;
-  document.getElementById('supplementsStreak').innerHTML = `<span class="trend-badge">${suppPct}% taken</span>`;
+  document.getElementById('supplementsProgress').textContent = `${completedSupp}/${totalSupp}`;
+  document.getElementById('supplementsStreak').innerHTML = totalSupp
+    ? `<span class="trend-badge">${Math.round(completedSupp/totalSupp*100)}% taken</span>` : '';
 
-  // Morning preview
-  const morningContainer = document.getElementById('morningPreviewList');
-  if (morningSteps.length) {
-    const completedMorning = morningSteps.filter(s => todaysLogKeys.has(`Morning|${s.step}`)).length;
-    document.getElementById('morningProgressText').textContent = `${completedMorning}/${morningSteps.length}`;
-    morningContainer.innerHTML = morningSteps.map(a => {
-      const product = productMap.get(a.productId);
-      const done = todaysLogKeys.has(`Morning|${a.step}`);
-      return `<div class="preview-item">
-        <div class="preview-status ${done ? 'done' : 'pending'}">${done ? '✓' : ''}</div>
-        <div class="preview-info">${escapeHtml(product ? product.product : 'Unknown')}</div>
-      </div>`;
-    }).join('');
-  } else {
-    morningContainer.innerHTML = '<div class="empty-state" style="padding:12px;">No morning routine for today</div>';
+  const totalAll = totalRoutine + totalSupp;
+  const doneAll  = completedRoutine + completedSupp;
+  document.getElementById('overallProgressFill').style.width = totalAll ? (doneAll/totalAll*100)+'%' : '0%';
+
+  // Render routine phases
+  renderPhase('morningList', 'morningProgressText', morning, doneRoutine, productMap);
+  renderPhase('eveningList', 'eveningProgressText', evening, doneRoutine, productMap);
+
+  // Render supplements
+  renderSupplements('suppList', 'suppProgressText', todaySuppAssignments, doneSupp, suppMap);
+}
+
+function renderPhase(listId, countId, steps, doneSet, productMap) {
+  const el = document.getElementById(listId);
+  const counter = document.getElementById(countId);
+  if (!steps.length) {
+    el.innerHTML = '<div class="empty-state" style="padding:16px 0;">Nothing scheduled today</div>';
+    if (counter) counter.textContent = '0/0';
+    return;
   }
-
-  // Evening preview
-  const eveningContainer = document.getElementById('eveningPreviewList');
-  if (eveningSteps.length) {
-    const completedEvening = eveningSteps.filter(s => todaysLogKeys.has(`Evening|${s.step}`)).length;
-    document.getElementById('eveningProgressText').textContent = `${completedEvening}/${eveningSteps.length}`;
-    eveningContainer.innerHTML = eveningSteps.map(a => {
-      const product = productMap.get(a.productId);
-      const done = todaysLogKeys.has(`Evening|${a.step}`);
-      return `<div class="preview-item">
-        <div class="preview-status ${done ? 'done' : 'pending'}">${done ? '✓' : ''}</div>
-        <div class="preview-info">${escapeHtml(product ? product.product : 'Unknown')}</div>
-      </div>`;
-    }).join('');
-  } else {
-    eveningContainer.innerHTML = '<div class="empty-state" style="padding:12px;">No evening routine for today</div>';
-  }
-
-  // Supplements preview
-  const suppContainer = document.getElementById('supplementsPreviewList');
-  if (activeSupplements.length) {
-    suppContainer.innerHTML = activeSupplements.map(s => {
-      const taken = todaySuppLog.has(s.supplementId);
-      return `<div class="preview-item">
-        <div class="preview-status ${taken ? 'done' : 'pending'}">${taken ? '✓' : ''}</div>
-        <div class="preview-info">
-          ${escapeHtml(s.name)}
-          <div class="preview-time">${escapeHtml(s.useFor || '')}</div>
+  const done = steps.filter(a => doneSet.has(`${a.phase}|${a.step}`)).length;
+  if (counter) counter.textContent = `${done}/${steps.length}`;
+  el.innerHTML = steps.map(a => {
+    const p = productMap.get(a.productId);
+    const isDone = doneSet.has(`${a.phase}|${a.step}`);
+    const brand = p ? getBrandNameFromId(p.brandId) : '';
+    return `<div class="step-item">
+      <div class="step-check ${isDone ? 'completed' : ''}"
+           onclick="toggleRoutineLog('${a.productId}','${a.phase}',${a.step},'${escapeHtml(p ? p.product : '')}')">
+        ${isDone ? '✓' : ''}
+      </div>
+      <div class="step-info">
+        <div class="step-name">${escapeHtml(p ? p.product : 'Unknown')}</div>
+        <div class="step-desc">
+          <span class="step-brand">${escapeHtml(brand)}</span>
+          <span class="step-days-badge">${formatDays(a.days)}</span>
         </div>
-      </div>`;
-    }).join('');
-  } else {
-    suppContainer.innerHTML = '<div class="empty-state" style="padding:12px;">No supplements defined</div>';
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderSupplements(listId, countId, suppAssigns, doneSet, suppMap) {
+  const el = document.getElementById(listId);
+  const counter = document.getElementById(countId);
+  if (!suppAssigns.length) {
+    el.innerHTML = '<div class="empty-state" style="padding:16px 0;">Nothing scheduled today</div>';
+    if (counter) counter.textContent = '0/0';
+    return;
   }
+  const done = suppAssigns.filter(a => doneSet.has(a.supplementId)).length;
+  if (counter) counter.textContent = `${done}/${suppAssigns.length}`;
+  el.innerHTML = suppAssigns.map(a => {
+    const s = suppMap.get(a.supplementId);
+    const isDone = doneSet.has(a.supplementId);
+    return `<div class="step-item">
+      <div class="step-check ${isDone ? 'completed' : ''}"
+           onclick="toggleSuppLog('${a.supplementId}','${escapeHtml(s ? s.name : '')}','${escapeHtml(a.timeSlot)}')">
+        ${isDone ? '✓' : ''}
+      </div>
+      <div class="step-info">
+        <div class="step-name">${escapeHtml(s ? s.name : 'Unknown')}</div>
+        <div class="step-desc">
+          <span class="step-brand">🕒 ${escapeHtml(a.timeSlot)}</span>
+          ${a.notes ? `<span>${escapeHtml(a.notes)}</span>` : ''}
+          <span class="step-days-badge">${formatDays(a.days)}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
-// ── Refresh all data ──────────────────────────────────────
-async function refreshDashboard() {
-  try { await loadProducts(); } catch(e) { console.warn('Products load failed', e); }
-  try { await loadAssignments(); } catch(e) { console.warn('Assignments load failed', e); }
-  try { await loadLogs(); } catch(e) { console.warn('Logs load failed', e); }
-  try { await loadSupplementsList(); } catch(e) { console.warn('Supplements load failed', e); }
-  await loadTodayLogs();
-  renderDashboard();
+// ── Toggle routine log ─────────────────────────────────────
+async function toggleRoutineLog(productId, phase, step, productName) {
+  const dateStr = formatDateISO(currentDate);
+  const alreadyLogged = routineLogs.some(l =>
+    l.date === dateStr && l.productId === productId && l.phase === phase && l.step === step
+  );
+  try {
+    if (!alreadyLogged) {
+      await gapi.client.sheets.spreadsheets.values.append({
+        spreadsheetId, range: `'${ROUTINE_LOG_SHEET}'!A2:G`, valueInputOption: 'RAW',
+        resource: { values: [[dateStr, productId, phase, step, productName, new Date().toISOString(), '']] }
+      });
+      showToast('✅ Logged');
+    } else {
+      const res = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId, range: `'${ROUTINE_LOG_SHEET}'!A2:G` });
+      const rows = res.result.values || [];
+      const newRows = rows.filter(r => !(r[0]===dateStr && r[1]===productId && r[2]===phase && Math.round(Number(r[3]))===step));
+      await gapi.client.sheets.spreadsheets.values.clear({ spreadsheetId, range: `'${ROUTINE_LOG_SHEET}'!A2:G` });
+      if (newRows.length) await gapi.client.sheets.spreadsheets.values.update({ spreadsheetId, range: `'${ROUTINE_LOG_SHEET}'!A2`, valueInputOption: 'RAW', resource: { values: newRows } });
+      showToast('Marked incomplete');
+    }
+    await loadRoutineLogs();
+    render();
+  } catch(e) { console.error(e); showToast('❌ Failed', 'error'); }
 }
 
-// ── Manual sync ───────────────────────────────────────────
+// ── Toggle supplement log ──────────────────────────────────
+async function toggleSuppLog(supplementId, supplementName, timeSlot) {
+  const dateStr = formatDateISO(currentDate);
+  const alreadyLogged = supplementLogs.some(l => l.date === dateStr && l.supplementId === supplementId);
+  try {
+    if (!alreadyLogged) {
+      await gapi.client.sheets.spreadsheets.values.append({
+        spreadsheetId, range: `'${SUPPLEMENTS_LOG_SHEET}'!A2:G`, valueInputOption: 'RAW',
+        resource: { values: [[dateStr, timeSlot, supplementId, supplementName, '', new Date().toISOString(), '']] }
+      });
+      showToast(`✅ ${supplementName} taken`);
+    } else {
+      const res = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId, range: `'${SUPPLEMENTS_LOG_SHEET}'!A2:G` });
+      const rows = res.result.values || [];
+      const newRows = rows.filter(r => !(r[0]===dateStr && r[2]===supplementId));
+      await gapi.client.sheets.spreadsheets.values.clear({ spreadsheetId, range: `'${SUPPLEMENTS_LOG_SHEET}'!A2:G` });
+      if (newRows.length) await gapi.client.sheets.spreadsheets.values.update({ spreadsheetId, range: `'${SUPPLEMENTS_LOG_SHEET}'!A2`, valueInputOption: 'RAW', resource: { values: newRows } });
+      showToast('Marked not taken');
+    }
+    await loadSupplementLogs();
+    render();
+  } catch(e) { console.error(e); showToast('❌ Failed', 'error'); }
+}
+
+// ── Load all & render ──────────────────────────────────────
+async function loadAndRender() {
+  try { await loadProducts(); } catch(e) { console.warn(e); }
+  try { await loadAssignments(); } catch(e) { console.warn(e); }
+  try { await loadRoutineLogs(); } catch(e) { console.warn(e); }
+  try { await loadSupplementsList(); } catch(e) { console.warn(e); }
+  try { await loadSupplementAssignments(); } catch(e) { console.warn(e); }
+  try { await loadSupplementLogs(); } catch(e) { console.warn(e); }
+  saveLocal();
+  render();
+}
+
+// ── Manual sync ────────────────────────────────────────────
 async function manualSync() {
-  if (!spreadsheetId) { showToast('⚠️ No Google Sheet connected', 'error'); return; }
+  if (!spreadsheetId) { showToast('⚠️ No sheet connected', 'error'); return; }
   const btn = document.getElementById('manualSyncBtn');
   btn.classList.add('spinning');
   try {
-    await refreshDashboard();
+    await loadAndRender();
     setSyncStrip('✅ Last synced: ' + new Date().toLocaleTimeString(), false);
     showToast('✅ Synced');
-  } catch (e) { showToast('❌ Sync failed', 'error'); }
+  } catch(e) { showToast('❌ Sync failed', 'error'); }
   btn.classList.remove('spinning');
 }
 
-// ── Google Drive helpers ──────────────────────────────────
-async function findExistingFolder() {
-  const res = await gapi.client.drive.files.list({
-    q: `name='${FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-    spaces: 'drive', fields: 'files(id)'
-  });
-  return res.result.files?.[0]?.id || null;
+// ── Ensure all sheets exist ────────────────────────────────
+async function ensureAllSheetsExist() {
+  try {
+    const meta = await gapi.client.sheets.spreadsheets.get({ spreadsheetId });
+    const existing = meta.result.sheets.map(s => s.properties.title);
+    const required = [
+      { name: PRODUCTS_SHEET,           headers: ['ProductID','BrandID','Product','Use For','Status'] },
+      { name: ROUTINE_SHEET,            headers: ['AssignmentID','ProductID','Phase','Step','Days'] },
+      { name: ROUTINE_LOG_SHEET,        headers: ['Date','ProductID','Phase','Step','Product','Timestamp','Notes'] },
+      { name: SUPPLEMENTS_SHEET,        headers: ['SupplementID','Name','Use For','Status'] },
+      { name: SUPPLEMENT_ROUTINE_SHEET, headers: ['AssignmentID','SupplementID','TimeSlot','Days','Notes'] },
+      { name: SUPPLEMENTS_LOG_SHEET,    headers: ['Date','TimeSlot','SupplementID','Supplement','Notes','Timestamp','Extra'] }
+    ];
+    const missing = required.filter(s => !existing.includes(s.name));
+    if (!missing.length) return;
+    const requests = missing.map(s => ({ addSheet: { properties: { title: s.name } } }));
+    await gapi.client.sheets.spreadsheets.batchUpdate({ spreadsheetId, resource: { requests } });
+    for (const sheet of missing) {
+      await gapi.client.sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: `'${sheet.name}'!A1:${String.fromCharCode(64+sheet.headers.length)}1`,
+        valueInputOption: 'RAW', resource: { values: [sheet.headers] }
+      });
+    }
+  } catch(e) { console.warn('ensureAllSheetsExist', e); }
 }
+
+// ── Drive helpers ──────────────────────────────────────────
 async function findExistingSpreadsheet() {
   const res = await gapi.client.drive.files.list({
     q: `name='${SPREADSHEET_NAME}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false`,
@@ -532,7 +452,6 @@ async function findExistingSpreadsheet() {
   return res.result.files?.[0]?.id || null;
 }
 
-// createFolderAndSheet function
 async function createFolderAndSheet(isRecreate = false) {
   const btnId  = isRecreate ? 'recreateFolderBtn' : 'createFolderBtn';
   const errId  = isRecreate ? 'recreateError'     : 'setupError';
@@ -541,82 +460,57 @@ async function createFolderAndSheet(isRecreate = false) {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Creating…';
   errDiv.style.display = 'none';
-
   try {
-    if (!gapi.client?.drive) throw new Error('Google API not ready.');
-
     const folderRes = await gapi.client.drive.files.create({
-      resource: { name: FOLDER_NAME, mimeType: 'application/vnd.google-apps.folder' },
-      fields: 'id'
+      resource: { name: FOLDER_NAME, mimeType: 'application/vnd.google-apps.folder' }, fields: 'id'
     });
     const folderId = folderRes.result.id;
-
     const sheetRes = await gapi.client.drive.files.create({
-      resource: { name: SPREADSHEET_NAME, mimeType: 'application/vnd.google-apps.spreadsheet', parents: [folderId] },
-      fields: 'id'
+      resource: { name: SPREADSHEET_NAME, mimeType: 'application/vnd.google-apps.spreadsheet', parents: [folderId] }, fields: 'id'
     });
     spreadsheetId = sheetRes.result.id;
 
     const initMeta = await gapi.client.sheets.spreadsheets.get({ spreadsheetId, fields: 'sheets.properties' });
     const defaultSheetId = initMeta.result.sheets[0].properties.sheetId;
 
-    // Rename default sheet to Products and add other sheets
-    await gapi.client.sheets.spreadsheets.batchUpdate({
-      spreadsheetId,
-      resource: {
-        requests: [
-          { updateSheetProperties: { properties: { sheetId: defaultSheetId, title: PRODUCTS_SHEET }, fields: 'title' } },
-          { addSheet: { properties: { title: ROUTINE_SHEET } } },
-          { addSheet: { properties: { title: ROUTINE_LOG_SHEET } } },
-          { addSheet: { properties: { title: SUPPLEMENTS_SHEET } } },
-          { addSheet: { properties: { title: SUPPLEMENT_ROUTINE_SHEET } } },
-          { addSheet: { properties: { title: SUPPLEMENTS_LOG_SHEET } } },
-          { addSheet: { properties: { title: 'UserSettings' } } }
-        ]
-      }
-    });
+    await gapi.client.sheets.spreadsheets.batchUpdate({ spreadsheetId, resource: { requests: [
+      { updateSheetProperties: { properties: { sheetId: defaultSheetId, title: PRODUCTS_SHEET }, fields: 'title' } },
+      { addSheet: { properties: { title: ROUTINE_SHEET } } },
+      { addSheet: { properties: { title: ROUTINE_LOG_SHEET } } },
+      { addSheet: { properties: { title: SUPPLEMENTS_SHEET } } },
+      { addSheet: { properties: { title: SUPPLEMENT_ROUTINE_SHEET } } },
+      { addSheet: { properties: { title: SUPPLEMENTS_LOG_SHEET } } },
+      { addSheet: { properties: { title: USER_SETTINGS_SHEET } } }
+    ]}});
 
-    await gapi.client.sheets.spreadsheets.values.batchUpdate({
-      spreadsheetId,
-      resource: {
-        valueInputOption: 'RAW',
-        data: [
-          { range: `'${PRODUCTS_SHEET}'!A1:E1`, values: [['ProductID','BrandID','Product','Use For','Status']] },
-          { range: `'${ROUTINE_SHEET}'!A1:E1`, values: [['AssignmentID','ProductID','Phase','Step','Days']] },
-          { range: `'${ROUTINE_LOG_SHEET}'!A1:G1`, values: [['Date','ProductID','Phase','Step','Product','Timestamp','Notes']] },
-          { range: `'${SUPPLEMENTS_SHEET}'!A1:D1`, values: [['SupplementID','Name','Use For','Status']] },
-          { range: `'${SUPPLEMENT_ROUTINE_SHEET}'!A1:E1`, values: [['AssignmentID','SupplementID','TimeSlot','Days','Notes']] },
-          { range: `'${SUPPLEMENTS_LOG_SHEET}'!A1:G1`, values: [['Date','TimeSlot','Supplement','Taken','Notes','Timestamp','SupplementID']] }
-        ]
-      }
-    });
+    await gapi.client.sheets.spreadsheets.values.batchUpdate({ spreadsheetId, resource: { valueInputOption: 'RAW', data: [
+      { range: `'${PRODUCTS_SHEET}'!A1:E1`,           values: [['ProductID','BrandID','Product','Use For','Status']] },
+      { range: `'${ROUTINE_SHEET}'!A1:E1`,             values: [['AssignmentID','ProductID','Phase','Step','Days']] },
+      { range: `'${ROUTINE_LOG_SHEET}'!A1:G1`,         values: [['Date','ProductID','Phase','Step','Product','Timestamp','Notes']] },
+      { range: `'${SUPPLEMENTS_SHEET}'!A1:D1`,         values: [['SupplementID','Name','Use For','Status']] },
+      { range: `'${SUPPLEMENT_ROUTINE_SHEET}'!A1:E1`,  values: [['AssignmentID','SupplementID','TimeSlot','Days','Notes']] },
+      { range: `'${SUPPLEMENTS_LOG_SHEET}'!A1:G1`,     values: [['Date','TimeSlot','SupplementID','Supplement','Notes','Timestamp','Extra']] }
+    ]}});
 
     await ensureUserSettingsSheet(spreadsheetId);
-
     localStorage.setItem(`drive_setup_${currentUserEmail}`, 'complete');
     localStorage.setItem(`spreadsheet_id_${currentUserEmail}`, spreadsheetId);
 
     showScreen('mainApp');
-    try {
-      await refreshDashboard();
-    } catch(e) {
-      console.error('Dashboard render error', e);
-      document.getElementById('morningPreviewList').innerHTML = '<div class="empty-state">⚠️ Could not load data. Try syncing.</div>';
-    }
+    renderDate();
+    await loadAndRender();
     setSyncStrip('✅ Synced to Google Drive', false);
     showToast('✅ Setup complete!');
-
-  } catch (err) {
+  } catch(err) {
     console.error(err);
     errDiv.textContent = err.message || 'Failed to create.';
     errDiv.style.display = 'block';
-    showToast('❌ Setup failed', 'error');
     btn.disabled = false;
     btn.textContent = isRecreate ? 'Recreate Folder & Continue' : 'Get Started';
   }
 }
 
-// ── Screen routing ────────────────────────────────────────
+// ── Screen routing ─────────────────────────────────────────
 function showScreen(id) {
   ['loadingScreen','loginScreen','setupScreen','folderMissingScreen','mainApp'].forEach(s => {
     const el = document.getElementById(s);
@@ -624,20 +518,20 @@ function showScreen(id) {
   });
 }
 
-function createGoogleTokenClient(callback, silent = false) {
+// ── Auth flow ──────────────────────────────────────────────
+function createTokenClient(callback, silent = false) {
   const cfg = { client_id: CLIENT_ID, scope: SCOPES, callback };
   if (silent) cfg.prompt = '';
   return google.accounts.oauth2.initTokenClient(cfg);
 }
 
-function showTapToConnectScreen(onTap) {
+function showTapScreen(onTap) {
   const box = document.querySelector('#loadingScreen .screen-box');
   box.innerHTML = `
     <span class="screen-icon">🧴</span>
     <h2>Welcome Back</h2>
     <p>Tap below to connect to your Google Drive</p>
-    <button class="primary-btn" id="resumeBtn" style="margin-top:8px">Connect to Google Drive</button>
-  `;
+    <button class="primary-btn" id="resumeBtn" style="margin-top:8px">Connect to Google Drive</button>`;
   showScreen('loadingScreen');
   document.getElementById('resumeBtn').addEventListener('click', () => {
     box.innerHTML = `<span class="screen-icon">🔄</span><h2>Loading…</h2><p>Connecting to your Google Drive</p><div class="spinner"></div>`;
@@ -645,21 +539,16 @@ function showTapToConnectScreen(onTap) {
   });
 }
 
-// ── After login callback ──────────────────────────────────
 let _setupRunning = false;
 async function onAccessTokenGranted(tokenResponse) {
-  if (!tokenResponse.access_token) return;
-  if (_setupRunning) return;
+  if (!tokenResponse.access_token || _setupRunning) return;
   _setupRunning = true;
-
   currentAccessToken = tokenResponse.access_token;
   saveAccessToken(currentAccessToken);
   gapi.client.setToken({ access_token: currentAccessToken });
-
   showScreen('loadingScreen');
-  await new Promise(r => setTimeout(r, 500));
 
-  loadLocalData();
+  loadLocal();
 
   const cachedSheetId = localStorage.getItem(`spreadsheet_id_${currentUserEmail}`);
   if (cachedSheetId) {
@@ -667,8 +556,9 @@ async function onAccessTokenGranted(tokenResponse) {
     try {
       await ensureUserSettingsSheet(spreadsheetId);
       await ensureAllSheetsExist();
-      await refreshDashboard();
+      await loadAndRender();
       document.getElementById('userEmailDisplay').textContent = currentUserEmail;
+      renderDate();
       showScreen('mainApp');
       setSyncStrip('✅ Last synced: ' + new Date().toLocaleTimeString(), false);
       showToast(`✅ Welcome back, ${currentUserEmail.split('@')[0]}!`);
@@ -677,15 +567,16 @@ async function onAccessTokenGranted(tokenResponse) {
     } catch(e) { console.warn('Cached sheet failed', e); }
   }
 
-  let foundSheetId = await findExistingSpreadsheet();
+  const foundSheetId = await findExistingSpreadsheet();
   if (foundSheetId) {
     spreadsheetId = foundSheetId;
     localStorage.setItem(`drive_setup_${currentUserEmail}`, 'complete');
     localStorage.setItem(`spreadsheet_id_${currentUserEmail}`, spreadsheetId);
     await ensureUserSettingsSheet(spreadsheetId);
     await ensureAllSheetsExist();
-    await refreshDashboard();
+    await loadAndRender();
     document.getElementById('userEmailDisplay').textContent = currentUserEmail;
+    renderDate();
     showScreen('mainApp');
     setSyncStrip('✅ Last synced: ' + new Date().toLocaleTimeString(), false);
     showToast(`✅ Welcome back, ${currentUserEmail.split('@')[0]}!`);
@@ -695,65 +586,62 @@ async function onAccessTokenGranted(tokenResponse) {
   _setupRunning = false;
 }
 
-// ── Google sign-in callback ───────────────────────────────
 async function handleCredentialResponse(response) {
   const token = response.credential;
   currentUserEmail = getUserEmailFromToken(token);
   if (!currentUserEmail) return;
   localStorage.setItem('google_token', token);
-
   showScreen('loadingScreen');
   await initGapiClient();
-
-  showTapToConnectScreen(() => {
-    createGoogleTokenClient(onAccessTokenGranted).requestAccessToken();
-  });
+  showTapScreen(() => createTokenClient(onAccessTokenGranted).requestAccessToken());
 }
 
-// ── Check existing login on load ──────────────────────────
 async function checkLogin() {
   const token = localStorage.getItem('google_token');
   if (!token) { showScreen('loginScreen'); return; }
   currentUserEmail = getUserEmailFromToken(token);
   if (!currentUserEmail) { showScreen('loginScreen'); return; }
 
-  loadLocalData();
+  loadLocal();
+  renderDate();
+  render(); // show cached data immediately
+
   await initGapiClient();
 
   const savedToken = getSavedAccessToken();
   if (savedToken) {
     currentAccessToken = savedToken;
-    showScreen('loadingScreen');
     gapi.client.setToken({ access_token: currentAccessToken });
     spreadsheetId = localStorage.getItem(`spreadsheet_id_${currentUserEmail}`);
     try {
       await gapi.client.drive.files.list({ q: 'trashed=false', pageSize: 1, fields: 'files(id)' });
       await ensureUserSettingsSheet(spreadsheetId);
       await ensureAllSheetsExist();
-      await refreshDashboard();
+      await loadAndRender();
       document.getElementById('userEmailDisplay').textContent = currentUserEmail;
       showScreen('mainApp');
       setSyncStrip('✅ Last synced: ' + new Date().toLocaleTimeString(), false);
       return;
-    } catch (e) { clearAccessToken(); }
+    } catch(e) { clearAccessToken(); }
   }
 
   if (isIOSSafari()) {
-    showTapToConnectScreen(() => {
-      createGoogleTokenClient(onAccessTokenGranted, true).requestAccessToken();
-    });
+    showTapScreen(() => createTokenClient(onAccessTokenGranted, true).requestAccessToken());
     return;
   }
 
   showScreen('loadingScreen');
-  createGoogleTokenClient(onAccessTokenGranted, true).requestAccessToken();
+  createTokenClient(onAccessTokenGranted, true).requestAccessToken();
 }
 
-// ── Wire up events ────────────────────────────────────────
+// ── Wire events ────────────────────────────────────────────
 window.onload = function () {
   try {
     google.accounts.id.initialize({ client_id: CLIENT_ID, callback: handleCredentialResponse });
-    google.accounts.id.renderButton(document.getElementById('googleSignInButton'), { theme: 'outline', size: 'large', text: 'continue_with', shape: 'rectangular', locale: 'en' });
+    google.accounts.id.renderButton(
+      document.getElementById('googleSignInButton'),
+      { theme: 'outline', size: 'large', text: 'continue_with', shape: 'rectangular', locale: 'en' }
+    );
 
     document.getElementById('createFolderBtn').addEventListener('click', () => createFolderAndSheet(false));
     document.getElementById('recreateFolderBtn').addEventListener('click', () => createFolderAndSheet(true));
@@ -761,17 +649,12 @@ window.onload = function () {
     document.getElementById('folderMissingLogoutBtn').addEventListener('click', logout);
     document.getElementById('manualSyncBtn').addEventListener('click', manualSync);
     document.getElementById('logoutBtn').addEventListener('click', () => logout());
+    document.getElementById('prevDateBtn').addEventListener('click', () => changeDate(-1));
+    document.getElementById('nextDateBtn').addEventListener('click', () => changeDate(1));
 
-    if (typeof renderBottomNav === 'function') {
-      if (!document.getElementById('bottomNavMount')) {
-        console.error('Missing bottomNavMount element');
-      }
-      renderBottomNav('home');
-    } else {
-      console.warn('renderBottomNav not loaded yet');
-    }
+    renderBottomNav('home');
     checkLogin();
-  } catch (err) {
+  } catch(err) {
     console.error('Init error:', err);
     showToast('App failed to start. Check console.', 'error');
   }
