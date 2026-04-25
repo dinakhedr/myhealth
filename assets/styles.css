@@ -1,6 +1,6 @@
 /* ============================================================
    HEALTH TRACKER — styles.css
-   Rose/Pink theme · Unified component library
+   Berry + Teal theme · Unified component library
    ============================================================ */
 
 /* ── Reset & Box Model ── */
@@ -8,12 +8,15 @@
 
 /* ── Design Tokens ── */
 :root {
-  --brand:        #e91e8c;
-  --brand-2:      #f06292;
-  --brand-grad:   linear-gradient(135deg, #e91e8c 0%, #f48fb1 100%);
+  --brand:        #ad1457;
+  --brand-2:      #d45f8a;
+  --brand-grad:   linear-gradient(135deg, #ad1457 0%, #d45f8a 100%);
+  --accent:       #0f766e;
+  --accent-2:     #2dd4bf;
+  --accent-grad:  linear-gradient(135deg, #0f766e 0%, #2dd4bf 100%);
   --surface:      #ffffff;
-  --surface-2:    #fff0f5;
-  --border:       #f9d0e6;
+  --surface-2:    #fef4f8;
+  --border:       #f2d0e2;
   --text:         #14142b;
   --text-2:       #6e6e8a;
   --text-3:       #a8a8c0;
@@ -23,7 +26,7 @@
   --radius-lg:    24px;
   --radius-md:    16px;
   --radius-sm:    10px;
-  --shadow:       0 8px 32px rgba(233,30,140,0.10);
+  --shadow:       0 8px 32px rgba(173,20,87,0.10);
   --shadow-sm:    0 2px 10px rgba(0,0,0,0.06);
   --nav-h:        72px;
   --page-pad:     18px;
@@ -123,8 +126,8 @@ body {
   display: flex; flex-direction: column; gap: 6px; color: #fff;
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
 }
-.kpi-card.skincare-card  { background: linear-gradient(135deg, #e91e8c 0%, #f48fb1 100%); }
-.kpi-card.supplements-card { background: linear-gradient(135deg, #c2185b 0%, #e91e8c 100%); }
+.kpi-card.skincare-card    { background: var(--brand-grad); }
+.kpi-card.supplements-card { background: var(--accent-grad); }
 .kpi-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.9; }
 .kpi-value { font-family: 'Sora', sans-serif; font-size: 24px; font-weight: 800; line-height: 1.2; }
 .kpi-trend { font-size: 11px; opacity: 0.85; }
@@ -177,7 +180,7 @@ textarea { resize: vertical; min-height: 72px; }
   width: 100%; padding: 14px; background: var(--brand-grad); color: #fff; border: none;
   border-radius: var(--radius-sm); font-size: 15px; font-weight: 700;
   font-family: 'Sora', sans-serif; cursor: pointer; margin-top: 6px;
-  box-shadow: 0 4px 16px rgba(233,30,140,0.30);
+  box-shadow: 0 4px 16px rgba(173,20,87,0.28);
   transition: opacity 0.2s, transform 0.15s;
   display: flex; align-items: center; justify-content: center; gap: 8px;
 }
@@ -189,7 +192,7 @@ textarea { resize: vertical; min-height: 72px; }
   background: var(--brand-grad); border: none; padding: 8px 16px; border-radius: 40px;
   color: white; font-weight: 600; font-size: 13px; font-family: 'DM Sans', sans-serif;
   cursor: pointer; display: flex; align-items: center; gap: 6px;
-  box-shadow: 0 2px 8px rgba(233,30,140,0.28); transition: transform 0.1s, opacity 0.2s;
+  box-shadow: 0 2px 8px rgba(173,20,87,0.25); transition: transform 0.1s, opacity 0.2s;
 }
 .add-product-card-btn:active { transform: scale(0.96); opacity: 0.9; }
 
@@ -198,13 +201,13 @@ textarea { resize: vertical; min-height: 72px; }
   border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600;
   cursor: pointer; font-family: 'DM Sans', sans-serif;
 }
-.btn-cancel:hover { background: #fce4ec; }
+.btn-cancel:hover { background: #fce8f0; }
 
 .btn-save {
   flex: 2; padding: 13px; background: var(--brand-grad); color: #fff;
   border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 700;
   cursor: pointer; font-family: 'Sora', sans-serif;
-  box-shadow: 0 4px 14px rgba(233,30,140,0.28);
+  box-shadow: 0 4px 14px rgba(173,20,87,0.25);
 }
 .btn-save:hover { opacity: 0.90; }
 
@@ -238,12 +241,12 @@ textarea { resize: vertical; min-height: 72px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .spinner {
   display: inline-block; width: 22px; height: 22px;
-  border: 2px solid rgba(233,30,140,0.20); border-top-color: var(--brand);
+  border: 2px solid rgba(173,20,87,0.18); border-top-color: var(--brand);
   border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle;
 }
 
 .loading-overlay {
-  position: fixed; inset: 0; background: rgba(233,30,140,0.15);
+  position: fixed; inset: 0; background: rgba(173,20,87,0.12);
   backdrop-filter: blur(4px); z-index: 9000;
   display: flex; align-items: center; justify-content: center;
 }
@@ -326,7 +329,7 @@ textarea { resize: vertical; min-height: 72px; }
 .bottom-nav {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 2000;
   display: flex; align-items: center; justify-content: center; padding: 8px 10px 10px;
-  background: rgba(180,20,100,0.88); backdrop-filter: blur(20px);
+  background: rgba(120,8,50,0.90); backdrop-filter: blur(20px);
   border-top: 1px solid rgba(255,255,255,0.15);
   box-shadow: 0 -4px 24px rgba(0,0,0,0.18);
 }
@@ -358,7 +361,7 @@ textarea { resize: vertical; min-height: 72px; }
 /* ── Today's Routine/Supplement checklist (Home page) ── */
 .phase-section { margin-bottom: 20px; }
 .phase-header {
-  background: rgba(233,30,140,0.08); padding: 8px 12px; border-radius: var(--radius-md);
+  background: rgba(173,20,87,0.07); padding: 8px 12px; border-radius: var(--radius-md);
   font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 700; color: var(--text);
   margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
 }
@@ -373,7 +376,7 @@ textarea { resize: vertical; min-height: 72px; }
 .step-item:last-child { border-bottom: none; }
 .step-check {
   width: 26px; height: 26px; border-radius: 8px; border: 2px solid #f9d0e6;
-  background: #fce4ec; cursor: pointer; display: flex; align-items: center;
+  background: #fce8f0; cursor: pointer; display: flex; align-items: center;
   justify-content: center; flex-shrink: 0; font-size: 14px; font-weight: bold;
   transition: transform 0.1s;
 }
@@ -392,7 +395,7 @@ textarea { resize: vertical; min-height: 72px; }
 .assignment-phase-container { margin-bottom: 20px; }
 .assignment-phase-title {
   font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 700;
-  color: var(--text); background: rgba(233,30,140,0.08);
+  color: var(--text); background: rgba(173,20,87,0.07);
   padding: 8px 12px; border-radius: var(--radius-md); margin-bottom: 8px;
 }
 .assignment-list { min-height: 60px; }
@@ -417,7 +420,7 @@ textarea { resize: vertical; min-height: 72px; }
 /* Time badge (Supplements routine) */
 .time-badge {
   display: inline-flex; align-items: center; justify-content: center;
-  min-width: 66px; height: 28px; background: var(--brand-grad); color: white;
+  min-width: 66px; height: 28px; background: var(--accent-grad); color: white;
   font-weight: 700; font-size: 11px; border-radius: 9px; padding: 0 8px;
   flex-shrink: 0; margin-top: 2px;
 }

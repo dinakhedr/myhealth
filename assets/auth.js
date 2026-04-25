@@ -70,7 +70,7 @@ function _authShowIOSTapScreen(onTap) {
   let overlay = document.getElementById('loadingOverlay');
   if (!overlay) {
     overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(233,30,140,0.96);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:20px;';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(173,20,87,0.96);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:20px;';
     document.body.appendChild(overlay);
   }
   overlay.style.display = 'flex';
@@ -79,12 +79,12 @@ function _authShowIOSTapScreen(onTap) {
       <div style="font-size:48px;margin-bottom:12px">🧴</div>
       <h2 style="font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:#14142b;margin-bottom:8px">Welcome Back</h2>
       <p style="color:#6e6e8a;font-size:14px;margin-bottom:20px">Tap below to connect to your Google Drive</p>
-      <button id="_authTapBtn" style="width:100%;padding:14px;background:linear-gradient(135deg,#e91e8c,#f48fb1);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:'Sora',sans-serif;cursor:pointer;">
+      <button id="_authTapBtn" style="width:100%;padding:14px;background:linear-gradient(135deg,#ad1457,#d45f8a);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:'Sora',sans-serif;cursor:pointer;">
         Connect to Google Drive
       </button>
     </div>`;
   document.getElementById('_authTapBtn').addEventListener('click', () => {
-    overlay.innerHTML = `<div style="background:#fff;border-radius:24px;padding:32px 24px;text-align:center"><div style="width:24px;height:24px;border:3px solid #fce4ec;border-top-color:#e91e8c;border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 12px"></div><p style="color:#6e6e8a;font-size:14px">Connecting…</p></div>`;
+    overlay.innerHTML = `<div style="background:#fff;border-radius:24px;padding:32px 24px;text-align:center"><div style="width:24px;height:24px;border:3px solid #fce8f0;border-top-color:#ad1457;border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 12px"></div><p style="color:#6e6e8a;font-size:14px">Connecting…</p></div>`;
     onTap();
   });
 }
