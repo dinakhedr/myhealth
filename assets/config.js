@@ -48,7 +48,8 @@ const USE_FOR_OPTIONS = [
   'Wrinkles / aging',
   'Dark spots',
   'Redness / sensitivity',
-  'Sun protection'
+  'Sun protection',
+  'Whitening / brightening'
 ];
 
 // Use for options for supplements (health concerns)
