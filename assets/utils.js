@@ -1,33 +1,66 @@
 // ============================================================
-// UTILS.JS — Health Tracker shared helpers (no dynamic theme)
+// UTILS.JS — Health Tracker shared helpers
 // ============================================================
 
 // ── Month / Date helpers ───────────────────────────────────
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MONTHS_FULL  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const WEEKDAYS     = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+const DAYS_SHORT = {
+  'Sunday':'Sun','Monday':'Mon','Tuesday':'Tue',
+  'Wednesday':'Wed','Thursday':'Thu','Friday':'Fri','Saturday':'Sat'
+};
 
 function monthName(num) { return MONTHS_FULL[(num - 1)] || ''; }
-function todayStr() { return new Date().toISOString().split('T')[0]; }
+function todayStr()     { return new Date().toISOString().split('T')[0]; }
 
-// ── Parse local date (YYYY-MM-DD) ──────────────────────────
 function parseLocalDate(str) {
   if (!str) return new Date();
   const [y, m, d] = str.split('-').map(Number);
   return new Date(y, m - 1, d);
 }
 
-// ── Format money (EGP) ─────────────────────────────────────
+function formatDateForDisplay(d) {
+  return d.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function formatDateISO(d) { return d.toISOString().split('T')[0]; }
+
+/**
+ * Returns today's weekday name, e.g. "Saturday"
+ */
+function getTodayWeekday(date) {
+  return WEEKDAYS[(date || new Date()).getDay()];
+}
+
+/**
+ * Format a days string for compact display (list views).
+ * "Sunday,Monday,...Saturday" → "Daily"
+ * "Monday,Tuesday,Wednesday,Thursday,Friday" → "Weekdays"
+ * "Monday,Wednesday,Friday" → "Mon, Wed, Fri"
+ * Always returns days in Sun→Sat order regardless of stored order.
+ */
+function formatDays(daysStr) {
+  const days = daysStr ? daysStr.split(',').map(d => d.trim()).filter(Boolean) : [];
+  if (days.length === 0) return '—';
+  if (days.length === 7) return 'Daily';
+  const weekdays = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+  if (days.length === 5 && weekdays.every(d => days.includes(d))) return 'Weekdays';
+  return WEEKDAYS.filter(d => days.includes(d)).map(d => DAYS_SHORT[d]).join(', ');
+}
+
+// ── Money ──────────────────────────────────────────────────
 function formatMoney(amount) {
   return `EGP ${Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-// ── Escape HTML ────────────────────────────────────────────
+// ── HTML escaping ──────────────────────────────────────────
 function escapeHtml(str) {
-  return (str || '').replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
+  return (str || '').replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 }
 
-// ======================== PRODUCT & ASSIGNMENT HELPERS ========================
-
+// ── Brand helpers ──────────────────────────────────────────
 function getBrandIcon(brandIdentifier) {
   const brand = BRANDS.find(b => b.id === brandIdentifier || b.name === brandIdentifier);
   if (brand && brand.logo) {
@@ -45,7 +78,6 @@ function getBrandIdFromName(brandName) {
   const brand = BRANDS.find(b => b.name === brandName);
   return brand ? brand.id : brandName;
 }
-
 
 // ── Token helpers ──────────────────────────────────────────
 function getUserEmailFromToken(token) {
@@ -71,7 +103,7 @@ function getUserNameFromToken(token) {
   } catch { return null; }
 }
 
-// ── Access token (sessionStorage) ─────────────────────────
+// ── Access token ───────────────────────────────────────────
 function saveAccessToken(token) { sessionStorage.setItem('gapi_access_token', token); }
 function getSavedAccessToken()  { return sessionStorage.getItem('gapi_access_token'); }
 function clearAccessToken()     { sessionStorage.removeItem('gapi_access_token'); }
@@ -104,19 +136,16 @@ function showToast(msg, type = 'success') {
   t.className = `toast ${type}`;
   void t.offsetHeight;
   t.classList.add('show');
-  _toastTimer = setTimeout(() => {
-    t.classList.remove('show');
-    _toastTimer = null;
-  }, 1000);
+  _toastTimer = setTimeout(() => { t.classList.remove('show'); _toastTimer = null; }, 1800);
 }
 
-// ── Bottom navigation renderer ─────────────────────────────
+// ── Bottom navigation ──────────────────────────────────────
 const NAV_TABS = [
-  { id: 'home',        label: 'Home',      icon: '🏠', href: 'Home.html'        },
-  { id: 'routine',     label: 'Routine',   icon: '🧴', href: 'Routine.html'     },
-  { id: 'supplements', label: 'Supplements',    icon: '💊', href: 'Supplements.html' },
-  { id: 'dashboard',   label: 'Dashboard', icon: '📊', href: 'Dashboard.html'   },
-  { id: 'settings',    label: 'Settings',  icon: '⚙️', href: 'Settings.html'    }
+  { id: 'home',        label: 'Home',        icon: '🏠', href: 'Home.html'        },
+  { id: 'routine',     label: 'Routine',      icon: '🧴', href: 'Routine.html'     },
+  { id: 'supplements', label: 'Supplements',  icon: '💊', href: 'Supplements.html' },
+  { id: 'dashboard',   label: 'Dashboard',    icon: '📊', href: 'Dashboard.html'   },
+  { id: 'settings',    label: 'Settings',     icon: '⚙️', href: 'Settings.html'    }
 ];
 
 function renderBottomNav(activePage, mountId = 'bottomNavMount') {
@@ -136,32 +165,146 @@ function renderBottomNav(activePage, mountId = 'bottomNavMount') {
 function logout(redirectTo = 'Home.html') {
   if (!confirm('Log out?')) return;
   const keys = ['google_token'];
-  const email = localStorage.getItem('google_token')
-    ? getUserEmailFromToken(localStorage.getItem('google_token'))
-    : null;
+  const token = localStorage.getItem('google_token');
+  const email = token ? getUserEmailFromToken(token) : null;
   if (email) {
     keys.push(
-      `drive_setup_${email}`,
-      `spreadsheet_id_${email}`,
-      `routine_${email}`,
-      `supplements_${email}`
+      `drive_setup_${email}`, `spreadsheet_id_${email}`,
+      `products_${email}`, `assignments_${email}`,
+      `supplements_${email}`, `suppAssignments_${email}`
     );
     for (let i = localStorage.length - 1; i >= 0; i--) {
       const k = localStorage.key(i);
-      if (k && k.startsWith(`routine_log_${email}_`)) keys.push(k);
-      if (k && k.startsWith(`supp_log_${email}_`)) keys.push(k);
+      if (k && (k.startsWith(`routine_log_${email}_`) || k.startsWith(`supp_log_${email}_`))) keys.push(k);
     }
   }
+  clearAccessToken();
   keys.forEach(k => localStorage.removeItem(k));
   window.location.href = redirectTo;
 }
 
-// ======================== USERSETTINGS SHEET MANAGEMENT ========================
-const USER_SETTINGS_SHEET = 'UserSettings';
+// ── Sync strip ─────────────────────────────────────────────
+function setSyncStrip(msg, warn) {
+  const el = document.getElementById('syncStatus');
+  if (el) { el.textContent = msg; el.className = warn ? 'sync-strip warn' : 'sync-strip'; }
+}
+
+// ── Status toggle UI ───────────────────────────────────────
+/**
+ * Wire up a status toggle button.
+ * @param {string} toggleId  - element ID of the toggle div
+ * @param {string} inputId   - element ID of the hidden input
+ */
+function initStatusToggle(toggleId, inputId) {
+  const toggle = document.getElementById(toggleId);
+  const input  = document.getElementById(inputId);
+  if (!toggle || !input) return;
+  toggle.addEventListener('click', () => {
+    const isActive = toggle.classList.contains('active');
+    toggle.classList.toggle('active', !isActive);
+    toggle.classList.toggle('inactive', isActive);
+    input.value = isActive ? 'Inactive' : 'Active';
+  });
+}
 
 /**
- * Ensure UserSettings sheet exists with proper headers.
+ * Set a status toggle to a given value without re-wiring the listener.
  */
+function setStatusToggle(toggleId, inputId, status) {
+  const toggle = document.getElementById(toggleId);
+  const input  = document.getElementById(inputId);
+  if (!toggle || !input) return;
+  const isActive = status === 'Active';
+  toggle.classList.toggle('active', isActive);
+  toggle.classList.toggle('inactive', !isActive);
+  input.value = status;
+}
+
+// ── Modal open / close ────────────────────────────────────
+function openModal(id)  { document.getElementById(id)?.classList.add('open'); }
+function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
+
+// ── Time sorter (for supplement slots) ────────────────────
+function getTimeValue(timeStr) {
+  if (!timeStr) return 9999;
+  const lower = timeStr.toLowerCase().trim();
+  if (lower === 'bedtime')   return 23;
+  if (lower === 'morning')   return 8;
+  if (lower === 'afternoon') return 13;
+  if (lower === 'evening')   return 18;
+  const match = timeStr.match(/(\d+)(?::(\d+))?\s*(am|pm)/i);
+  if (match) {
+    let hour = parseInt(match[1], 10);
+    const minute = match[2] ? parseInt(match[2], 10) : 0;
+    const meridiem = match[3].toLowerCase();
+    if (meridiem === 'pm' && hour !== 12) hour += 12;
+    if (meridiem === 'am' && hour === 12) hour = 0;
+    return hour + minute / 60;
+  }
+  return 9999;
+}
+
+// ── Day checkbox helpers ───────────────────────────────────
+function renderDayCheckboxes(containerId, selectedDaysStr = '') {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const selectedSet = new Set(selectedDaysStr.split(',').map(s => s.trim()).filter(Boolean));
+  container.innerHTML = WEEKDAYS.map(day => {
+    const checked = selectedSet.has(day) ? 'checked' : '';
+    return `<label>
+      <input type="checkbox" value="${day}" ${checked}>
+      <span>${day}</span>
+    </label>`;
+  }).join('');
+}
+
+function getSelectedDays(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return '';
+  const selected = Array.from(container.querySelectorAll('input:checked')).map(cb => cb.value);
+  if (selected.length === 0) return '';
+  return WEEKDAYS.filter(d => selected.includes(d)).join(',');
+}
+
+function selectAllDays(containerId) {
+  document.getElementById(containerId)?.querySelectorAll('input').forEach(cb => cb.checked = true);
+}
+
+function unselectAllDays(containerId) {
+  document.getElementById(containerId)?.querySelectorAll('input').forEach(cb => cb.checked = false);
+}
+
+// ── Use-for checkbox helpers ───────────────────────────────
+function renderUseForCheckboxesGeneric(containerId, optionsArray, selectedStr = '') {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const selectedSet = new Set(selectedStr.split(',').map(s => s.trim()).filter(Boolean));
+  container.innerHTML = optionsArray.map(option => {
+    const checked = selectedSet.has(option) ? 'checked' : '';
+    return `<label>
+      <input type="checkbox" value="${escapeHtml(option)}" ${checked}>
+      <span>${escapeHtml(option)}</span>
+    </label>`;
+  }).join('');
+}
+
+function getSelectedUseForGeneric(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return '';
+  return Array.from(container.querySelectorAll('input:checked')).map(cb => cb.value).join(',');
+}
+
+// Skincare alias (uses USE_FOR_OPTIONS from config.js)
+function renderUseForCheckboxes(selectedStr) {
+  renderUseForCheckboxesGeneric('useForCheckboxes', USE_FOR_OPTIONS, selectedStr);
+}
+function getSelectedUseFor() {
+  return getSelectedUseForGeneric('useForCheckboxes');
+}
+
+// ── UserSettings sheet ─────────────────────────────────────
+const USER_SETTINGS_SHEET = 'UserSettings';
+
 async function ensureUserSettingsSheet(spreadsheetId) {
   try {
     const meta = await gapi.client.sheets.spreadsheets.get({ spreadsheetId });
@@ -173,16 +316,12 @@ async function ensureUserSettingsSheet(spreadsheetId) {
       });
       await gapi.client.sheets.spreadsheets.values.update({
         spreadsheetId, range: `${USER_SETTINGS_SHEET}!A1:B1`,
-        valueInputOption: 'RAW',
-        resource: { values: [['Key', 'Value']] }
+        valueInputOption: 'RAW', resource: { values: [['Key', 'Value']] }
       });
     }
   } catch (e) { console.warn('ensureUserSettingsSheet', e); }
 }
 
-/**
- * Get a setting value from UserSettings sheet.
- */
 async function getUserSetting(spreadsheetId, key, defaultValue = null) {
   try {
     const res = await gapi.client.sheets.spreadsheets.values.get({
@@ -194,9 +333,6 @@ async function getUserSetting(spreadsheetId, key, defaultValue = null) {
   } catch (e) { return defaultValue; }
 }
 
-/**
- * Set a setting value (upsert) in UserSettings sheet.
- */
 async function setUserSetting(spreadsheetId, key, value) {
   try {
     const res = await gapi.client.sheets.spreadsheets.values.get({
@@ -205,94 +341,16 @@ async function setUserSetting(spreadsheetId, key, value) {
     const rows = res.result.values || [];
     const existingIndex = rows.findIndex(r => r[0] === key);
     if (existingIndex !== -1) {
-      // Update existing row
-      rows[existingIndex][1] = value;
       await gapi.client.sheets.spreadsheets.values.update({
-        spreadsheetId, range: `${USER_SETTINGS_SHEET}!A${existingIndex + 2}:B${existingIndex + 2}`,
-        valueInputOption: 'RAW',
-        resource: { values: [[key, value]] }
+        spreadsheetId,
+        range: `${USER_SETTINGS_SHEET}!A${existingIndex + 2}:B${existingIndex + 2}`,
+        valueInputOption: 'RAW', resource: { values: [[key, value]] }
       });
     } else {
-      // Append new row
       await gapi.client.sheets.spreadsheets.values.append({
         spreadsheetId, range: `${USER_SETTINGS_SHEET}!A2:B`,
-        valueInputOption: 'RAW',
-        resource: { values: [[key, value]] }
+        valueInputOption: 'RAW', resource: { values: [[key, value]] }
       });
     }
   } catch (e) { console.warn('setUserSetting', e); }
-}
-
-// ======================== DAY SELECTION HELPERS ========================
-const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-/**
- * Render weekday checkboxes inside a container.
- * @param {string} containerId - ID of the container element.
- * @param {string} selectedDaysStr - Comma-separated string of selected days (e.g. "Sunday,Monday").
- */
-function renderDayCheckboxes(containerId, selectedDaysStr = '') {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  const selectedSet = new Set(selectedDaysStr.split(',').map(s => s.trim()).filter(Boolean));
-  container.innerHTML = WEEKDAYS.map(day => {
-    const checked = selectedSet.has(day) ? 'checked' : '';
-    return `<label style="display:flex; align-items:center; gap:8px; margin:0; padding:2px 0; font-size:12px; cursor:pointer;">
-      <input type="checkbox" value="${day}" ${checked} style="margin:0; width:16px; height:16px;">
-      <span>${day}</span>
-    </label>`;
-  }).join('');
-}
-
-/**
- * Get selected days from a checkbox container.
- * @param {string} containerId - ID of the container holding the checkboxes.
- * @returns {string} Comma-separated list of selected days.
- */
-function getSelectedDays(containerId) {
-  const container = document.getElementById(containerId);
-  if (!container) return '';
-  return Array.from(container.querySelectorAll('input:checked'))
-              .map(cb => cb.value)
-              .join(',');
-}
-
-function selectAllDays(containerId) {
-  const container = document.getElementById(containerId);
-  if (container) {
-    container.querySelectorAll('input').forEach(cb => cb.checked = true);
-  }
-}
-
-function unselectAllDays(containerId) {
-  const container = document.getElementById(containerId);
-  if (container) {
-    container.querySelectorAll('input').forEach(cb => cb.checked = false);
-  }
-}
-
-// ======================== USE FOR CHECKBOXES HELPER ========================
-/**
- * Render use‑for checkboxes inside a container.
- * @param {string} containerId - ID of the container.
- * @param {Array} optionsArray - Array of option strings.
- * @param {string} selectedStr - Comma-separated string of selected options.
- */
-function renderUseForCheckboxesGeneric(containerId, optionsArray, selectedStr = '') {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  const selectedSet = new Set(selectedStr.split(',').map(s => s.trim()).filter(Boolean));
-  container.innerHTML = optionsArray.map(option => {
-    const checked = selectedSet.has(option) ? 'checked' : '';
-    return `<label style="display:flex; align-items:center; gap:8px; margin:0; padding:2px 0; font-size:12px; cursor:pointer;">
-      <input type="checkbox" value="${escapeHtml(option)}" ${checked} style="margin:0; width:16px; height:16px; flex-shrink:0;">
-      <span>${escapeHtml(option)}</span>
-    </label>`;
-  }).join('');
-}
-
-function getSelectedUseForGeneric(containerId) {
-  const container = document.getElementById(containerId);
-  if (!container) return '';
-  return Array.from(container.querySelectorAll('input:checked')).map(cb => cb.value).join(',');
 }
