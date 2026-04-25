@@ -326,13 +326,13 @@ function renderSupplements(listId, countId, suppAssigns, doneSet, suppMap) {
     const isDone = doneSet.has(a.supplementId);
     return `<div class="step-item">
       <div class="step-check ${isDone ? 'completed' : ''}"
-           onclick="toggleSuppLog('${a.supplementId}','${escapeHtml(s ? s.name : '')}','${escapeHtml(a.timeSlot)}')" style="${isDone?'background:var(--accent);border-color:var(--accent);':''}">
+           onclick="toggleSuppLog('${a.supplementId}','${escapeHtml(s ? s.name : '')}','${escapeHtml(a.timeSlot)}')">
         ${isDone ? '✓' : ''}
       </div>
       <div class="step-info">
         <div class="step-name">${escapeHtml(s ? s.name : 'Unknown')}</div>
         <div class="step-desc">
-          <span class="step-brand" style="color:var(--accent)">🕒 ${escapeHtml(a.timeSlot)}</span>
+          <span class="step-brand">🕒 ${escapeHtml(a.timeSlot)}</span>
           ${a.notes ? `<span>${escapeHtml(a.notes)}</span>` : ''}
           <span class="step-days-badge">${formatDays(a.days)}</span>
         </div>
