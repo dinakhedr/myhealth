@@ -353,7 +353,7 @@ textarea { resize: vertical; min-height: 72px; }
 
 /* ── Progress Bar ── */
 .progress-bar { height: 6px; background: var(--surface-2); border-radius: 6px; margin: 16px 0; overflow: hidden; }
-.progress-fill { height: 100%; background: var(--brand-grad); border-radius: 6px; width: 0%; transition: width 0.3s; }
+.progress-fill { height: 100%; background: #10b981; border-radius: 6px; width: 0%; transition: width 0.3s; }
 
 /* ── Today's Routine/Supplement checklist (Home page) ── */
 .phase-section { margin-bottom: 20px; }
