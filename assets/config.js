@@ -30,6 +30,7 @@ const BRANDS = [
   { id: 'laroche',   name: 'LaRoche Posay', logo: 'LaRoche.png'   },
   { id: 'loreal',    name: "L'Oréal",       logo: 'Loreal.png'    },
   { id: 'melatime',  name: 'Melatime',      logo: 'Melatime.png'  },
+  { id: 'nanotreat',  name: 'NanoTreat',      logo: 'NanoTreat.png'  },
   { id: 'sophia',    name: 'Sophia',        logo: 'Sophia.png'    },
   { id: 'vichy',     name: 'Vichy',         logo: 'Vichy.png'     }
 ];
